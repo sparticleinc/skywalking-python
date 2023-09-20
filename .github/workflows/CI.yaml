@@ -1,0 +1,298 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: CI
+# This process will only run upon scheduled event on upstream master
+# or upon pull request when actual code or CI flow is changed
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: '0 18 * * *'
+
+concurrency:
+  group: CI-plugin-e2e-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  license-and-lint:
+    # Always check license-and-lint!
+    name: License and Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source codes
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Check License
+        uses: apache/skywalking-eyes/header@501a28d2fb4a9b962661987e50cf0219631b32ff
+      - name: Lint codes
+        run: |
+          make poetry
+          poetry install --only lint
+          make lint
+
+  # Check if the plugin doc is generated correctly
+  plugin-doc-check:
+    name: Check Plugin Doc
+    needs: license-and-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source codes
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Check plugin doc
+        run: |
+          make env
+          make check-doc-gen
+
+  changes:
+    # Check if any file related to Agent/ CI behavior is changed
+    # set outputs for other jobs to access for if conditions
+    name: Check Changes
+    runs-on: ubuntu-latest
+    # To prevent error when there's no base branch
+    if: github.event_name != 'schedule'
+    timeout-minutes: 10
+    outputs:
+      agent: ${{ steps.filter.outputs.agent }}
+    steps:
+      - uses: actions/checkout@v3  # required for push event
+      - name: Check for file changes
+        uses: getsentry/paths-filter@v2.11.1
+        id: filter
+        with:
+          token: ${{ github.token }}
+          # The following filters indicate a category along with
+          # the files that should not be ignored by CI when modified.
+          filters: |
+            agent:
+              - '.github/**/*.yaml'
+              - '**/*.py'
+              - '**/Dockerfile*'
+              - '**/Makefile'
+              - 'protocol/**'
+              - 'tests/**'
+              - '**/*.bat'
+              - '**/*.sh'
+              - '**/*.ps1'
+              - '**/pyproject.toml'
+              - '**/poetry.lock'
+              - '**/*.cfg'
+          list-files: json  # logs matched files
+
+  # Only run the Plugin and E2E jobs if there are essential changes as stated above
+  prep-plugin-and-unit-tests:
+    # prep step for plugin and unit test
+    name: Build Plugin and UT Matrix
+    needs: [ license-and-lint, changes, plugin-doc-check ]
+    if: |
+      ( always() && ! cancelled() ) &&
+      ((github.event_name == 'schedule' && github.repository == 'apache/skywalking-python') || needs.changes.outputs.agent == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - id: set-matrix
+        run: |
+          sudo apt-get install jq
+          echo "matrix=$(bash tests/gather_test_paths.sh)" >> $GITHUB_OUTPUT
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+  docker-plugin:
+    # build docker image for plugin tests, with matrix of Python versions
+    name: Build Plugin Test Image
+    needs: [ license-and-lint, changes, plugin-doc-check, prep-plugin-and-unit-tests ]
+    if: |
+      ( always() && ! cancelled() ) &&
+      ((github.event_name == 'schedule' && github.repository == 'apache/skywalking-python') || needs.changes.outputs.agent == 'true')
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: # may support pypy in the future
+        python-version: [ "3.7-slim", "3.8-slim", "3.9-slim", "3.10-slim", "3.11-slim" ]
+      fail-fast: false
+    env:
+      BASE_PYTHON_IMAGE: ${{ matrix.python-version }}
+    steps:
+      - name: Checkout source codes
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Build SkyWalking Python agent base plugin image
+        run: |
+          docker build --build-arg BASE_PYTHON_IMAGE -t apache/skywalking-python-agent:latest-plugin --no-cache . -f tests/plugin/Dockerfile.plugin
+          docker save -o docker-images-skywalking-python-plugin-${{ matrix.python-version }}.tar apache/skywalking-python-agent:latest-plugin
+      - name: Upload docker image with specific python version
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-images-skywalking-python-plugin-${{ matrix.python-version }}
+          path: docker-images-skywalking-python-plugin-${{ matrix.python-version }}.tar
+          retention-days: 1
+
+  plugin-and-unit-tests:
+    # Execute plugin tests with matrix of Python versions and matrix of cases
+    # this step is only run after passing building images + prep matrix + changes
+    name: Plugin and Unit Tests
+    needs: [ license-and-lint, changes, plugin-doc-check, docker-plugin, prep-plugin-and-unit-tests ]
+    if: |
+      ( always() && ! cancelled() ) &&
+      ((github.event_name == 'schedule' && github.repository == 'apache/skywalking-python') || needs.changes.outputs.agent == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        python-version: [ "3.7", "3.8", "3.9", "3.10", "3.11" ]
+        test-path: ${{fromJson(needs.prep-plugin-and-unit-tests.outputs.matrix)}}
+      fail-fast: false
+    env:
+      BASE_PYTHON_IMAGE: ${{ matrix.python-version }}
+    steps:
+      - name: Checkout source codes
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Pull SkyWalking Python agent base image
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-images-skywalking-python-plugin-${{ matrix.python-version }}-slim
+          path: docker-images
+      - name: Load docker images
+        run: find docker-images -name "*.tar" -exec docker load -i {} \;
+      - name: Set up Python ${{ matrix.python-version }}
+        # This step is crucial for correct plugin matrix in test orchestration
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run unit tests
+        run: |
+          make env
+          poetry run pytest -v ${{ matrix.test-path }}
+
+  docker-e2e:
+    # build docker image for E2E tests, single Python version for now.
+    name: Build E2E Test Image
+    needs: [ license-and-lint, changes, plugin-doc-check ]
+    if: |
+      ( always() && ! cancelled() ) && 
+      ((github.event_name == 'schedule' && github.repository == 'apache/skywalking-python') || needs.changes.outputs.agent == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python-image-variant: [ "3.7-slim", "3.8-slim", "3.9-slim", "3.10-slim", "3.11-slim" ]
+      fail-fast: false
+    env:
+      BASE_PYTHON_IMAGE: ${{ matrix.python-image-variant }}
+    steps:
+      - name: Checkout source codes
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Build SkyWalking Python agent base e2e image
+        run: |
+          docker build --build-arg BASE_PYTHON_IMAGE -t apache/skywalking-python-agent:latest-e2e --no-cache . -f tests/e2e/base/Dockerfile.e2e
+          docker save -o docker-images-skywalking-python-e2e-${{ matrix.python-image-variant }}.tar apache/skywalking-python-agent:latest-e2e
+      - name: Upload docker image
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-images-skywalking-python-e2e-${{ matrix.python-image-variant }}
+          path: docker-images-skywalking-python-e2e-${{ matrix.python-image-variant }}.tar
+          retention-days: 1
+
+  e2e-tests:
+    # execute E2E tests with SkyWalking-infra-e2e with a matrix of agent protocols
+    name: E2E
+    needs: [ license-and-lint, changes, plugin-doc-check, docker-e2e ]
+    if: |
+      ( always() && ! cancelled() ) && 
+      ((github.event_name == 'schedule' && github.repository == 'apache/skywalking-python') || needs.changes.outputs.agent == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        python-image-variant: [ "3.7-slim", "3.8-slim", "3.9-slim", "3.10-slim", "3.11-slim" ]
+        case:
+          - name: gRPC-single-process
+            path: tests/e2e/case/grpc/single/e2e.yaml
+          - name: gRPC-gunicorn
+            path: tests/e2e/case/grpc/gunicorn/e2e.yaml
+          - name: gRPC-uwsgi
+            path: tests/e2e/case/grpc/uwsgi/e2e.yaml
+          - name: HTTP-single-process
+            path: tests/e2e/case/http/single/e2e.yaml
+          - name: HTTP-gunicorn
+            path: tests/e2e/case/http/gunicorn/e2e.yaml
+          - name: HTTP-uwsgi
+            path: tests/e2e/case/http/uwsgi/e2e.yaml
+          - name: Kafka-single-process
+            path: tests/e2e/case/kafka/single/e2e.yaml
+          - name: Kafka-gunicorn
+            path: tests/e2e/case/kafka/gunicorn/e2e.yaml
+          - name: Kafka-uwsgi
+            path: tests/e2e/case/kafka/uwsgi/e2e.yaml
+          - name: profiling_threading
+            path: tests/e2e/case/profiling/threading/e2e.yaml
+          - name: profiling_greenlet
+            path: tests/e2e/case/profiling/greenlet/e2e.yaml
+      fail-fast: false
+    steps:
+      - name: Checkout source codes
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Pull SkyWalking Python agent base image
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-images-skywalking-python-e2e-${{ matrix.python-image-variant }}
+          path: docker-images
+      - name: Load docker images
+        run: find docker-images -name "*.tar" -exec docker load -i {} \;
+      - name: Run E2E Tests
+        uses: apache/skywalking-infra-e2e@2f20482135ba3a933bc0bb48c41f538ad1aa3048
+        with:
+          log-dir: /tmp/e2e-logs
+          e2e-file: ${{ matrix.case.path }}
+      - name: Upload Logs
+        uses: actions/upload-artifact@v3
+        if: ${{ failure() }}
+        with:
+          name: e2e_logs_${{ matrix.case.name }}_${{ matrix.python-image-variant }}
+          path: "${{ env.SW_INFRA_E2E_LOG_DIR }}"
+
+  CheckStatus:
+    # a required check that must pass before merging a PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # wait upon them regardless of success or skipped or failure
+    if: ${{ always() }}
+    needs: [ license-and-lint, changes, plugin-and-unit-tests, plugin-doc-check, e2e-tests ]
+    steps:
+      - name: Merge Requirement
+        # check license, lint, plugin and e2e tests, then naturally exits 0
+        run: |
+          execute=${{ needs.changes.outputs.agent }}
+          lintResults=${{ needs.license-and-lint.result }}
+          pluginResults=${{ needs.plugin-and-unit-tests.result }};
+          e2eResults=${{ needs.e2e-tests.result }};
+          docCheckResults=${{ needs.plugin-doc-check.result }};
+          [[ ${lintResults} == 'success' ]] || exit 2;
+          [[ ${docCheckResults} == 'success' ]] || exit 3;
+          [[ ${pluginResults} == 'success' ]] || [[ ${execute} != 'true' && ${pluginResults} == 'skipped' ]] || exit 4;
+          [[ ${e2eResults} == 'success' ]] || [[ ${execute} != 'true' && ${e2eResults} == 'skipped' ]] || exit 5;
+          exit 0;
