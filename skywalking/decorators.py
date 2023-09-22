@@ -22,6 +22,7 @@ from typing import List
 from skywalking import Layer, Component
 from skywalking.trace.context import get_context
 from skywalking.trace.tags import Tag
+from skywalking.agent import agent
 
 
 def trace(
@@ -36,6 +37,9 @@ def trace(
         if inspect.iscoroutinefunction(func):
             @wraps(func)
             async def wrapper(*args, **kwargs):
+                if not agent.is_started():
+                    return await func(*args, **kwargs)
+                
                 context = get_context()
                 span = context.new_local_span(op=_op)
                 span.layer = layer
@@ -51,6 +55,9 @@ def trace(
         else:
             @wraps(func)
             def wrapper(*args, **kwargs):
+                if not agent.__started:
+                    return func(*args, **kwargs)
+                                
                 context = get_context()
                 span = context.new_local_span(op=_op)
                 span.layer = layer

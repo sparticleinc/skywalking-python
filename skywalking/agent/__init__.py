@@ -348,7 +348,10 @@ class SkyWalkingAgent(Singleton):
         # command dispatch will stuck when there are no commands
         command_service.dispatch()
 
-    def is_segment_queue_full(self):
+    def is_started(self):
+        return self.__started
+    
+    def is_segment_queue_full(self):       
         return self.__segment_queue.full()
 
     def archive_segment(self, segment: 'Segment'):
