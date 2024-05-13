@@ -21,9 +21,9 @@
 
 ## Capabilities
 
-| Reporter  | Supported?      | Details                                                    | 
-|:----------|:----------------|:-----------------------------------------------------------|
-| Trace     | ✅ (default: ON) | Automatic instrumentation + Manual SDK                     |            
+| Reporter  | Supported?      | Details                                                    |
+| :-------- | :-------------- | :--------------------------------------------------------- |
+| Trace     | ✅ (default: ON) | Automatic instrumentation + Manual SDK                     |
 | Log       | ✅ (default: ON) | Direct reporter only. (Tracing context in log planned)     |
 | Meter     | ✅ (default: ON) | Meter API + Automatic PVM metrics                          |
 | Event     | ❌ (Planned)     | Report lifecycle events of your awesome Python application |
