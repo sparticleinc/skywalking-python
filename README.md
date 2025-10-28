@@ -48,7 +48,7 @@ Before submitting a pull request or pushing a commit, please read our [contribut
 * Send `Request to join SkyWalking slack` mail to the mail list(`dev@skywalking.apache.org`), we will invite you in.
 * Twitter, [ASFSkyWalking](https://twitter.com/AsfSkyWalking)
 * QQ Group: 901167865, 392443393
-* Package maintenance contact: hy.zhu@sparticle.com
+* Package maintenance contact: hy.zhu@sparticle.com qq98982@gmail.com
 * [bilibili B站 视频](https://space.bilibili.com/390683219)
 
 ## License
