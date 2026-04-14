@@ -1,17 +1,17 @@
 # SkyWalking Python Agent
 
-**This is the official documentation of SkyWalking Python agent. Welcome to the SkyWalking community!**
+**This repository publishes the Sparticle-maintained PyPI distribution `sparticle-skywalking`.**
 
 The Python Agent for Apache SkyWalking provides the native tracing/metrics/logging/profiling abilities for Python projects.
 
 This documentation covers a number of ways to set up the Python agent for various use cases.
 
-[![GitHub stars](https://img.shields.io/github/stars/apache/skywalking-python.svg?style=for-the-badge&label=Stars&logo=github)](https://github.com/apache/skywalking-python)
+[![GitHub stars](https://img.shields.io/github/stars/sparticleinc/skywalking-python.svg?style=for-the-badge&label=Stars&logo=github)](https://github.com/sparticleinc/skywalking-python)
 [![Twitter Follow](https://img.shields.io/twitter/follow/asfskywalking.svg?style=for-the-badge&label=Follow&logo=twitter)](https://twitter.com/AsfSkyWalking)
 
-![Release](https://img.shields.io/pypi/v/apache-skywalking)
-![Version](https://img.shields.io/pypi/pyversions/apache-skywalking)
-![Build](https://github.com/apache/skywalking-python/actions/workflows/CI.yaml/badge.svg?event=push)
+![Release](https://img.shields.io/pypi/v/sparticle-skywalking)
+![Version](https://img.shields.io/pypi/pyversions/sparticle-skywalking)
+![Build](https://github.com/sparticleinc/skywalking-python/actions/workflows/CI.yaml/badge.svg?event=push)
 
 ## Capabilities
 

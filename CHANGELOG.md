@@ -2,6 +2,12 @@
 
 ### 1.1.0
 
+### 1.0.6
+
+- Others:
+  - Publish the Sparticle-maintained PyPI distribution as `sparticle-skywalking`
+  - Add GitHub Actions based PyPI publishing with Trusted Publisher
+
 ### 1.0.1
 
 - Feature:

@@ -1,18 +1,20 @@
 # SkyWalking Python Agent
 
-<img src="http://skywalking.apache.org/assets/logo.svg" alt="Sky Walking logo" height="90px" align="right" />
+<img src="https://skywalking.apache.org/assets/logo.svg" alt="Sky Walking logo" height="90px" align="right" />
 
-**SkyWalking-Python**: The Python Agent for Apache SkyWalking provides the native tracing/metrics/logging/profiling abilities for Python projects.
+**`sparticle-skywalking`** is the Sparticle-maintained PyPI distribution of the SkyWalking Python agent.
+
+It provides the native tracing/metrics/logging/profiling abilities for Python projects while keeping the runtime import path unchanged as `skywalking`.
 
 **[SkyWalking](https://github.com/apache/skywalking)**: Application performance monitor tool for distributed systems, especially designed for microservices, cloud native and container-based (Kubernetes) architectures.
 
 
-[![GitHub stars](https://img.shields.io/github/stars/apache/skywalking-python.svg?style=for-the-badge&label=Stars&logo=github)](https://github.com/apache/skywalking-python)
+[![GitHub stars](https://img.shields.io/github/stars/sparticleinc/skywalking-python.svg?style=for-the-badge&label=Stars&logo=github)](https://github.com/sparticleinc/skywalking-python)
 [![Twitter Follow](https://img.shields.io/twitter/follow/asfskywalking.svg?style=for-the-badge&label=Follow&logo=twitter)](https://twitter.com/AsfSkyWalking)
 
-![Release](https://img.shields.io/pypi/v/apache-skywalking)
-![Version](https://img.shields.io/pypi/pyversions/apache-skywalking)
-![Build](https://github.com/apache/skywalking-python/actions/workflows/CI.yaml/badge.svg?event=push)
+![Release](https://img.shields.io/pypi/v/sparticle-skywalking)
+![Version](https://img.shields.io/pypi/pyversions/sparticle-skywalking)
+![Build](https://github.com/sparticleinc/skywalking-python/actions/workflows/CI.yaml/badge.svg?event=push)
 
 ## Documentation
 
@@ -33,6 +35,11 @@
 
 SkyWalking Python Agent requires [Apache SkyWalking 8.0+](https://skywalking.apache.org/downloads/#SkyWalkingAPM) and Python 3.7+.
 
+```bash
+pip install "sparticle-skywalking"
+pip install "sparticle-skywalking[all]"
+```
+
 > If you would like to try out the latest features that are not released yet, please refer to this [guide](docs/en/setup/faq/How-to-build-from-sources.md) to build from sources.
 
 ## Live Demo
@@ -48,7 +55,7 @@ Before submitting a pull request or pushing a commit, please read our [contribut
 * Send `Request to join SkyWalking slack` mail to the mail list(`dev@skywalking.apache.org`), we will invite you in.
 * Twitter, [ASFSkyWalking](https://twitter.com/AsfSkyWalking)
 * QQ Group: 901167865, 392443393
-* Package maintenance contact: hy.zhu@sparticle.com qq98982@gmail.com
+* Package maintenance contact: hy.zhu@sparticle.com
 * [bilibili B站 视频](https://space.bilibili.com/390683219)
 
 ## License

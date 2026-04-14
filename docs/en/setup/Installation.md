@@ -29,25 +29,25 @@ Please refer to the table below before deciding which report protocol suits best
 > If you want to try out the latest features that are not released yet, please refer to
 > this [guide](faq/How-to-build-from-sources.md) to build from sources.
 
-The Python agent module is published to [PyPI](https://pypi.org/project/apache-skywalking/), 
+The Python agent module is published to [PyPI](https://pypi.org/project/sparticle-skywalking/),
 from where you can use `pip` to install:
 
 ```shell
 # Install the latest version, using the default gRPC protocol to report data to OAP
-pip install "apache-skywalking"
+pip install "sparticle-skywalking"
 
 # Install support for every protocol (gRPC, HTTP, Kafka)
-pip install "apache-skywalking[all]"
+pip install "sparticle-skywalking[all]"
 
 # Install the latest version, using the http protocol to report data to OAP
-pip install "apache-skywalking[http]"
+pip install "sparticle-skywalking[http]"
 
 # Install the latest version, using the kafka protocol to report data to OAP
-pip install "apache-skywalking[kafka]"
+pip install "sparticle-skywalking[kafka]"
 
 # Install a specific version x.y.z
-# pip install apache-skywalking==x.y.z
-pip install apache-skywalking==0.1.0  # For example, install version 0.1.0 no matter what the latest version is
+# pip install sparticle-skywalking==x.y.z
+pip install sparticle-skywalking==1.0.6  # For example, pin to version 1.0.6 explicitly
 ```
 
 ### From Docker Hub

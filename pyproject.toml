@@ -15,16 +15,16 @@
 # limitations under the License.
 
 [tool.poetry]
-name = "sparticleinc-skywalking"
-version = "1.0.5"
+name = "sparticle-skywalking"
+version = "1.0.6"
 description = "The Python Agent for Apache SkyWalking, which provides the native tracing/metrics/logging/profiling abilities for Python projects."
 license = "Apache-2.0"
-authors = ["Apache Software Foundation <dev@skywalking.apache.org>"]
-maintainers = ["Apache SkyWalking Community <dev@skywalking.apache.org>"]
+authors = ["Sparticle Community <hy.zhu@sparticle.com>"]
+maintainers = ["Sparticle Community <hy.zhu@sparticle.com>"]
 readme = "README.md"
-homepage = "https://skywalking.apache.org/"
+homepage = "https://github.com/sparticleinc/skywalking-python"
 repository = "https://github.com/sparticleinc/skywalking-python"
-documentation = "https://github.com/sparticleinc/skywalking-python/next/readme/"
+documentation = "https://github.com/sparticleinc/skywalking-python/blob/main/README.md"
 keywords = [
     "skywalking", "tracing", "metrics", "logging", "profiling", 
     "observability", "distributed-tracing", "apm",
@@ -63,7 +63,7 @@ exclude = ['tests']
 generate-setup-file = true
 
 [tool.poetry.urls]
-"Bug Tracker" = "https://github.com/apache/skywalking/issues"
+"Bug Tracker" = "https://github.com/sparticleinc/skywalking-python/issues"
 
 [tool.poetry.scripts]
 sw-python = 'skywalking.bootstrap.cli.sw_python:start'

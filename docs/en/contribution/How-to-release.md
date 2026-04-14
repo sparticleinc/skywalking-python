@@ -1,217 +1,69 @@
-# Apache SkyWalking Python Release Guide
+# Sparticle SkyWalking Python Release Guide
 
-This documentation guides the release manager to release the SkyWalking Python in the Apache Way, and also helps people to check the release for vote.
+This guide documents how this repository publishes the `sparticle-skywalking` package to PyPI.
 
 ## Prerequisites
 
-1. Close (if finished, or move to next milestone otherwise) all issues in the current milestone from [skywalking-python](https://github.com/apache/skywalking-python/milestones) and [skywalking](https://github.com/apache/skywalking/milestones), create a new milestone if needed.
-2. Update CHANGELOG.md and `version` in `pyproject.toml`.
+1. Update `CHANGELOG.md` and the version in `pyproject.toml`.
+2. Make sure the package name in `pyproject.toml` is `sparticle-skywalking`.
+3. Make sure the PyPI Trusted Publisher for `sparticle-skywalking` points to:
+   - GitHub owner: `sparticleinc`
+   - repository: `skywalking-python`
+   - workflow: `publish-pypi.yml`
+   - environment: `pypi`
+4. Merge the release commit into `main`.
 
-## Add your GPG public key to Apache SVN
+## Local verification
 
-1. Log in [id.apache.org](https://id.apache.org/) and submit your key fingerprint.
-
-2. Add your GPG public key into [SkyWalking GPG KEYS](https://dist.apache.org/repos/dist/release/skywalking/KEYS) file, **you can do this only if you are a PMC member**.  You can ask a PMC member for help. **DO NOT override the existed `KEYS` file content, only append your key at the end of the file.**
-
-
-## Build and sign the source code package
-
-```shell
-export VERSION=<the version to release>
-
-git clone --recurse-submodules git@github.com:apache/skywalking-python && cd skywalking-python
-git tag -a "v$VERSION" -m "Release Apache SkyWalking-Python $VERSION"
-git push --tags
-
-make clean && make release
-```
-
-## Upload to Apache SVN
+Build the package before pushing a release tag:
 
 ```bash
-svn co https://dist.apache.org/repos/dist/dev/skywalking/python release/skywalking/python
-mkdir -p release/skywalking/python/"$VERSION"
-cp skywalking-python/skywalking*.tgz release/skywalking/python/"$VERSION"
-cp skywalking-python/skywalking*.tgz.asc release/skywalking/python/"$VERSION"
-cp skywalking-python/skywalking-python*.tgz.sha512 release/skywalking/python/"$VERSION"
-
-cd release/skywalking && svn add python/$VERSION && svn commit python -m "Draft Apache SkyWalking-Python release $VERSION"
+poetry build
+python -m pip install --upgrade "packaging>=24.2" twine
+python -m twine check dist/*
 ```
 
-## Make the internal announcement
+The build should produce:
 
-Send an announcement email to dev@ mailing list, **please check all links before sending the email**, the same below.
+- `dist/sparticle_skywalking-$VERSION.tar.gz`
+- `dist/sparticle_skywalking-$VERSION-py3-none-any.whl`
 
-```text
-Subject: [ANNOUNCEMENT] Apache SkyWalking Python $VERSION test build available
+## Publish a release
 
-Content:
+Set the version you want to release:
 
-The test build of Apache SkyWalking Python $VERSION is now available.
-
-We welcome any comments you may have, and will take all feedback into
-account if a quality vote is called for this build.
-
-Release notes:
-
- * https://github.com/apache/skywalking-python/blob/v$VERSION/CHANGELOG.md
-
-Release Candidate:
-
- * https://dist.apache.org/repos/dist/dev/skywalking/python/$VERSION
- * sha512 checksums
-   - sha512xxxxyyyzzz skywalking-python-src-x.x.x.tgz
-
-Release Tag :
-
- * (Git Tag) v$VERSION
-
-Release Commit Hash :
-
- * https://github.com/apache/skywalking-python/tree/<Git Commit Hash>
-
-Keys to verify the Release Candidate :
-
- * http://pgp.mit.edu:11371/pks/lookup?op=get&search=0x8BD99F552D9F33D7 corresponding to kezhenxu94@apache.org
-
-Guide to build the release from source :
-
- * https://github.com/apache/skywalking-python/blob/master/CONTRIBUTING.md#compiling-and-building
-
-A vote regarding the quality of this test build will be initiated
-within the next couple of days.
+```bash
+export VERSION=1.0.6
 ```
 
-## Wait at least 48 hours for test responses
+Create and push the Git tag:
 
-Any PMC, committer or contributor can test features for releasing, and feedback.
-Based on that, PMC will decide whether to start a vote or not.
-
-## Call for vote in dev@ mailing list
-
-Call for vote in `dev@skywalking.apache.org`.
-
-```text
-Subject: [VOTE] Release Apache SkyWalking Python version $VERSION
-
-Content:
-
-Hi the SkyWalking Community:
-This is a call for vote to release Apache SkyWalking Python version $VERSION.
-
-Release notes:
-
- * https://github.com/apache/skywalking-python/blob/v$VERSION/CHANGELOG.md
-
-Release Candidate:
-
- * https://dist.apache.org/repos/dist/dev/skywalking/python/$VERSION
- * sha512 checksums
-   - sha512xxxxyyyzzz skywalking-python-src-x.x.x.tgz
-
-Release Tag :
-
- * (Git Tag) v$VERSION
-
-Release Commit Hash :
-
- * https://github.com/apache/skywalking-python/tree/<Git Commit Hash>
-
-Keys to verify the Release Candidate :
-
- * https://dist.apache.org/repos/dist/release/skywalking/KEYS
-
-Guide to build the release from source :
-
- * https://github.com/apache/skywalking-python/blob/master/CONTRIBUTING.md#compiling-and-building
-
-Voting will start now and will remain open for at least 72 hours, all PMC members are required to give their votes.
-
-[ ] +1 Release this package.
-[ ] +0 No opinion.
-[ ] -1 Do not release this package because....
-
-Thanks.
-
-[1] https://github.com/apache/skywalking/blob/master/docs/en/guides/How-to-release.md#vote-check
+```bash
+git checkout main
+git pull --ff-only origin main
+git tag "v$VERSION"
+git push origin "v$VERSION"
 ```
 
-## Vote Check
+The publish workflow at `.github/workflows/publish-pypi.yml` will:
 
-All PMC members and committers should check these before voting +1:
+1. verify that `v$VERSION` matches the version in `pyproject.toml`
+2. build the distribution with Poetry
+3. run `twine check`
+4. publish to PyPI through Trusted Publisher
 
-1. Features test.
-1. All artifacts in staging repository are published with `.asc`, `.md5`, and `sha` files.
-1. Source codes and distribution packages (`skywalking-python-src-$VERSION.tgz`)
-are in `https://dist.apache.org/repos/dist/dev/skywalking/python/$VERSION` with `.asc`, `.sha512`.
-1. `LICENSE` and `NOTICE` are in source codes and distribution package.
-1. Check `shasum -c skywalking-python-src-$VERSION.tgz.sha512`.
-1. Check `gpg --verify skywalking-python-src-$VERSION.tgz.asc skywalking-python-src-$VERSION.tgz`.
-1. Build distribution from source code package by following this [the build guide](#build-and-sign-the-source-code-package).
-1. Licenses check, `make license`.
+## Post-release verification
 
-Vote result should follow these:
+After the workflow succeeds, verify installation from PyPI:
 
-1. PMC vote is +1 binding, all others is +1 no binding.
+```bash
+python -m pip install --upgrade "sparticle-skywalking==$VERSION"
+python - <<'PY'
+import skywalking
+print(skywalking.__file__)
+PY
+```
 
-1. Within 72 hours, you get at least 3 (+1 binding), and have more +1 than -1. Vote pass. 
+Also confirm the project page renders correctly:
 
-1. **Send the closing vote mail to announce the result**.  When count the binding and no binding votes, please list the names of voters. An example like this:
-
-   ```
-   [RESULT][VOTE] Release Apache SkyWalking Python version $VERSION
-   
-   72+ hours passed, we’ve got ($NUMBER) +1 bindings (and ... +1 non-bindings):
-   
-   (list names)
-   +1 bindings:
-   xxx
-   ...
-   
-   +1 non-bindings:
-   xxx
-   ...
-    
-   Thank you for voting, I’ll continue the release process.
-   ```
-
-## Publish release
-
-1. Move source codes tar balls and distributions to `https://dist.apache.org/repos/dist/release/skywalking/`, **you can do this only if you are a PMC member**.
-
-    ```shell
-    svn mv https://dist.apache.org/repos/dist/dev/skywalking/python/"$VERSION" https://dist.apache.org/repos/dist/release/skywalking/python/"$VERSION"
-    ```
-    
-1. Refer to the previous [PR](https://github.com/apache/skywalking-website/pull/132), update news and links on the website. There are several files need to modify.
-
-1. Update [Github release page](https://github.com/apache/skywalking-python/releases), follow the previous convention.
-
-1. Send ANNOUNCE email to `dev@skywalking.apache.org` and `announce@apache.org`, the sender should use his/her Apache email account. 
-
-    ```
-    Subject: [ANNOUNCEMENT] Apache SkyWalking Python $VERSION Released
-
-    Content:
-
-    Hi the SkyWalking Community
-
-    On behalf of the SkyWalking Team, I’m glad to announce that SkyWalking Python $VERSION is now released.
-
-    SkyWalking Python: The Python Agent for Apache SkyWalking provides the native tracing/metrics/logging/profiling abilities for Python projects.
-
-    SkyWalking: APM (application performance monitor) tool for distributed systems, especially designed for microservices, cloud native and container-based (Docker, Kubernetes, Mesos) architectures.
-
-    Download Links: http://skywalking.apache.org/downloads/
-
-    Release Notes : https://github.com/apache/skywalking-python/blob/v$VERSION/CHANGELOG.md
-
-    Website: http://skywalking.apache.org/
-    
-    SkyWalking Python Resources:
-    - Issue: https://github.com/apache/skywalking/issues
-        - Mailing list: dev@skywalking.apache.org
-        - Documents: https://github.com/apache/skywalking-python/blob/v$VERSION/README.md
-    
-    The Apache SkyWalking Team
-    ```
+- <https://pypi.org/project/sparticle-skywalking/>

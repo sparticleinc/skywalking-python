@@ -33,7 +33,7 @@ However, if you want to use HTTP protocol to report data, configure `agent_colle
 (or environment variable `SW_AGENT_COLLECTOR_BACKEND_SERVICES`) to `<oap-ip-or-host>:12800`,
 such as `127.0.0.1:12800`, further set `agent_protocol` (or environment variable `SW_AGENT_PROTOCOL` to `http`):
 
-> Remember you should install `skywalking-python` with extra requires `http`, `pip install "apache-skywalking[http]`.
+> Remember you should install the package with the `http` extra, `pip install "sparticle-skywalking[http]"`.
 
 ```python
 from skywalking import agent, config
@@ -50,7 +50,7 @@ Finally, if you want to use Kafka protocol to report data, configure `kafka_boot
 (or environment variable `SW_KAFKA_BOOTSTRAP_SERVERS`) to `kafka-brokers`,
 such as `127.0.0.1:9200`, further set `agent_protocol` (or environment variable `SW_AGENT_PROTOCOL` to `kafka`):
 
-> Remember you should install `skywalking-python` with extra requires `kafka`, `pip install "apache-skywalking[kafka]"`.
+> Remember you should install the package with the `kafka` extra, `pip install "sparticle-skywalking[kafka]"`.
 
 ```python
 from skywalking import agent, config
