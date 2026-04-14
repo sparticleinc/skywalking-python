@@ -15,7 +15,22 @@
 # limitations under the License.
 #
 
+import socket
+import time
+
 import requests
+
+
+def _wait_for_provider(timeout=10):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            with socket.create_connection(('provider', 9091), timeout=1):
+                return
+        except OSError:
+            time.sleep(0.2)
+
+    raise TimeoutError('provider:9091 did not become reachable in time')
 
 
 if __name__ == '__main__':
@@ -25,10 +40,12 @@ if __name__ == '__main__':
 
     @app.route('/users', methods=['POST', 'GET'])
     def application():
-        requests.get('http://provider:9091/insert_many', timeout=5)
-        requests.get('http://provider:9091/find_one', timeout=5)
+        _wait_for_provider()
+        requests.get('http://provider:9091/insert_many', timeout=5).raise_for_status()
+        requests.get('http://provider:9091/find_one', timeout=5).raise_for_status()
         res = requests.get('http://provider:9091/delete_one', timeout=5)
+        res.raise_for_status()
         return jsonify(res.json())
 
     PORT = 9090
-    app.run(host='0.0.0.0', port=PORT, debug=True)
+    app.run(host='0.0.0.0', port=PORT, debug=False)

@@ -15,29 +15,26 @@
 # limitations under the License.
 #
 
-logItems: []
-meterItems: []
-
 segmentItems:
   - serviceName: producer
     segmentSize: 1
     segments:
       - segmentId: not null
         spans:
-          - operationName: Kafka/skywalking/Producer
+          - operationName: celery/skywalking.tasks.echo
             parentSpanId: 0
             spanId: 1
             spanLayer: MQ
             tags:
               - key: mq.broker
-                value: 'kafka-server:9092'
-              - key: mq.topic
-                value: skywalking
+                value: redis://redis:6379/0
+              - key: celery.parameters
+                value: not null
             startTime: gt 0
             endTime: gt 0
-            componentId: 40
+            componentId: 7011
             spanType: Exit
-            peer: kafka-server:9092
+            peer: redis:6379
             skipAnalysis: false
           - operationName: /users
             operationId: 0
@@ -57,24 +54,24 @@ segmentItems:
             spanType: Entry
             peer: not null
             skipAnalysis: false
-  - serviceName: consumer
+  - serviceName: worker
     segmentSize: 1
     segments:
       - segmentId: not null
         spans:
-          - operationName: Kafka/skywalking/Consumer/skywalking
+          - operationName: celery/skywalking.tasks.echo
             operationId: 0
             parentSpanId: -1
             spanId: 0
             spanLayer: MQ
             tags:
               - key: mq.broker
-                value: 'kafka-server:9092'
-              - key: mq.topic
-                value: skywalking
+                value: redis://redis:6379/0
+              - key: celery.parameters
+                value: not null
             refs:
-              - parentEndpoint: Kafka/skywalking/Producer
-                networkAddress: 'kafka-server:9092'
+              - parentEndpoint: celery/skywalking.tasks.echo
+                networkAddress: redis:6379
                 refType: CrossProcess
                 parentSpanId: 1
                 parentTraceSegmentId: not null
@@ -83,7 +80,7 @@ segmentItems:
                 traceId: not null
             startTime: gt 0
             endTime: gt 0
-            componentId: 41
+            componentId: 7011
             spanType: Entry
-            peer: ''
+            peer: not null
             skipAnalysis: false

@@ -29,7 +29,7 @@ services:
     ports:
       - 6379:6379
     healthcheck:
-      test: ["CMD", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/6379"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 60s
       retries: 120
@@ -56,6 +56,8 @@ services:
     environment:
       SW_AGENT_NAME: provider
       SW_AGENT_LOGGING_LEVEL: DEBUG
+      SW_AGENT_LOG_REPORTER_ACTIVE: 'False'
+      SW_AGENT_METER_REPORTER_ACTIVE: 'False'
 
   consumer:
     extends:
@@ -74,6 +76,8 @@ services:
     environment:
       SW_AGENT_NAME: consumer
       SW_AGENT_LOGGING_LEVEL: DEBUG
+      SW_AGENT_LOG_REPORTER_ACTIVE: 'False'
+      SW_AGENT_METER_REPORTER_ACTIVE: 'False'
 
 networks:
   beyond:

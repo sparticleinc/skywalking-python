@@ -14,36 +14,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from typing import Callable
 
-import socket
-import time
-
+import pytest
 import requests
 
-
-def _wait_for_provider(timeout=10):
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        try:
-            with socket.create_connection(('provider', 9091), timeout=1):
-                return
-        except OSError:
-            time.sleep(0.2)
-
-    raise TimeoutError('provider:9091 did not become reachable in time')
+from skywalking.plugins.sw_celery import support_matrix
+from tests.orchestrator import get_test_vector
+from tests.plugin.base import TestPluginBase
 
 
-if __name__ == '__main__':
-    from flask import Flask, jsonify
+def get_celery_test_vector():
+    return [
+        version.replace('celery==', 'celery[redis]==', 1)
+        for version in get_test_vector(lib_name='celery', support_matrix=support_matrix)
+    ]
 
-    app = Flask(__name__)
 
-    @app.route('/users', methods=['POST', 'GET'])
-    def application():
-        _wait_for_provider()
-        res = requests.post('http://provider:9091/users', timeout=5)
-        res.raise_for_status()
-        return jsonify(res.json())
+@pytest.fixture
+def prepare():
+    # type: () -> Callable
+    return lambda *_: requests.get('http://0.0.0.0:9090/users', timeout=20)
 
-    PORT = 9090
-    app.run(host='0.0.0.0', port=PORT, debug=False)
+
+class TestPlugin(TestPluginBase):
+    @pytest.mark.parametrize('version', get_celery_test_vector())
+    def test_plugin(self, docker_compose, version):
+        self.validate()

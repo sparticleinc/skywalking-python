@@ -21,10 +21,9 @@ from skywalking.trace.context import get_context
 from skywalking.trace.tags import TagMqBroker, TagCeleryParameters
 
 link_vector = ['https://docs.celeryq.dev']
-# TODO: Celery is missing plugin test
 support_matrix = {
     'celery': {
-        '>=3.7': ['5.1']
+        '>=3.10': ['5.6.*']
     }
 }
 note = """The celery server running with "celery -A ..." should be run with the HTTP protocol

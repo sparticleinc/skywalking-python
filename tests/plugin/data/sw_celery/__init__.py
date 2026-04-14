@@ -14,23 +14,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-if __name__ == '__main__':
-    from pathlib import Path
-
-    topic = 'skywalking'
-    server_list = ['kafka-server:9092']
-    group_id = 'skywalking'
-    client_id = '0'
-
-    from kafka import KafkaConsumer
-    from kafka import TopicPartition
-    consumer = KafkaConsumer(group_id=group_id,
-                             client_id=client_id,
-                             bootstrap_servers=server_list)
-    partition = TopicPartition(topic, int(client_id))
-    consumer.assign([partition])
-    consumer.poll(timeout_ms=1000)
-    Path('/tmp/consumer-ready').touch()
-    for msg in consumer:
-        print(msg)
