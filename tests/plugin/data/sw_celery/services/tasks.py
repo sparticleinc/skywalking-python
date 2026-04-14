@@ -15,22 +15,18 @@
 # limitations under the License.
 #
 
-if __name__ == '__main__':
-    from pathlib import Path
+from celery import Celery
 
-    topic = 'skywalking'
-    server_list = ['kafka-server:9092']
-    group_id = 'skywalking'
-    client_id = '0'
+app = Celery(
+    'sw_celery',
+    broker='redis://redis:6379/0',
+    backend='redis://redis:6379/1',
+)
 
-    from kafka import KafkaConsumer
-    from kafka import TopicPartition
-    consumer = KafkaConsumer(group_id=group_id,
-                             client_id=client_id,
-                             bootstrap_servers=server_list)
-    partition = TopicPartition(topic, int(client_id))
-    consumer.assign([partition])
-    consumer.poll(timeout_ms=1000)
-    Path('/tmp/consumer-ready').touch()
-    for msg in consumer:
-        print(msg)
+
+@app.task(name='skywalking.tasks.echo')
+def echo(song, artist):
+    return {
+        'song': song,
+        'artist': artist,
+    }

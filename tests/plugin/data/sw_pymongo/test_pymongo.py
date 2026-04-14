@@ -15,6 +15,8 @@
 # limitations under the License.
 #
 from typing import Callable
+import socket
+import time
 
 import pytest
 import requests
@@ -27,7 +29,25 @@ from tests.plugin.base import TestPluginBase
 @pytest.fixture
 def prepare():
     # type: () -> Callable
-    return lambda *_: requests.get('http://0.0.0.0:9090/users', timeout=5)
+    def _wait_for_port(port, timeout=10):
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            try:
+                with socket.create_connection(('0.0.0.0', port), timeout=1):
+                    return
+            except OSError:
+                time.sleep(0.2)
+
+        raise TimeoutError(f'Port {port} did not become ready in time')
+
+    def _prepare(*_):
+        _wait_for_port(9090)
+        _wait_for_port(9091)
+        response = requests.get('http://0.0.0.0:9090/users', timeout=5)
+        response.raise_for_status()
+        return response
+
+    return _prepare
 
 
 class TestPlugin(TestPluginBase):

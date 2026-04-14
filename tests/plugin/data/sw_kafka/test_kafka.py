@@ -27,7 +27,12 @@ from tests.plugin.base import TestPluginBase
 @pytest.fixture
 def prepare():
     # type: () -> Callable
-    return lambda *_: requests.get('http://0.0.0.0:9090/users', timeout=5)
+    def _prepare(*_):
+        response = requests.get('http://0.0.0.0:9090/users', timeout=5)
+        response.raise_for_status()
+        return response
+
+    return _prepare
 
 
 class TestPlugin(TestPluginBase):

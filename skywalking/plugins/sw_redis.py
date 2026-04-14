@@ -22,7 +22,7 @@ from skywalking.trace.tags import TagCacheType, TagCacheOp, TagCacheCmd, TagCach
 link_vector = ['https://github.com/andymccurdy/redis-py/']
 support_matrix = {
     'redis': {
-        '>=3.7': ['3.5.*', '4.5.1']
+        '>=3.10': ['5.3.*', '7.4.*']
     }
 }
 note = """"""
@@ -51,12 +51,16 @@ def install():
         peer = f'{this.host}:{this.port}'
 
         if len(args) == 1:
-            cmd = args[0]
+            cmd = _normalize_token(args[0], uppercase=True)
             key = ''
         elif len(args) > 1:
-            cmd, key = args[0], args[1]
+            cmd = _normalize_token(args[0], uppercase=True)
+            key = _normalize_token(args[1], uppercase=False)
         else:  # just to be safe
             cmd = key = ''
+
+        if cmd == 'CLIENT' and _normalize_token(key, uppercase=True) == 'SETINFO':
+            return _send_command(this, *args, **kwargs)
 
         if cmd in OPERATIONS_WRITE:
             op = 'write'
@@ -78,3 +82,13 @@ def install():
             return res
 
     Connection.send_command = _sw_send_command
+
+
+def _normalize_token(value, uppercase):
+    if isinstance(value, bytes):
+        value = value.decode('utf-8', errors='ignore')
+    else:
+        value = str(value)
+
+    value = value.strip()
+    return value.upper() if uppercase else value

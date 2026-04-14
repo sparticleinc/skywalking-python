@@ -49,7 +49,7 @@ def docker_compose(request: FixtureRequest, prepare: Callable, version: str) -> 
         with open(os.path.join(cwd, 'requirements.txt'), mode='w') as req:
             req.write(version)
 
-    with DockerCompose(context=cwd, compose_file_name='docker-compose.yml', wait=False) as compose:
+    with DockerCompose(cwd, compose_file_name='docker-compose.yml') as compose:
         exception = None
         exception_delay = 0
         stdout, stderr = None, None

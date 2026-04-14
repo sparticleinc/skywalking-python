@@ -15,13 +15,16 @@
 # limitations under the License.
 #
 
+logItems: []
+meterItems: []
+
 segmentItems:
   - serviceName: provider
     segmentSize: 3
     segments:
       - segmentId: not null
         spans:
-          - operationName: MongoDB/MixedBulkWriteOperation
+          - operationName: MongoDB/InsertOperation
             parentSpanId: 0
             spanId: 1
             spanLayer: Database

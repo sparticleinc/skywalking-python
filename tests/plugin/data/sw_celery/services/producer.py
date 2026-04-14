@@ -15,35 +15,18 @@
 # limitations under the License.
 #
 
-import socket
-import time
-
-import requests
-
-
-def _wait_for_provider(timeout=10):
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        try:
-            with socket.create_connection(('provider', 9091), timeout=1):
-                return
-        except OSError:
-            time.sleep(0.2)
-
-    raise TimeoutError('provider:9091 did not become reachable in time')
-
-
 if __name__ == '__main__':
     from flask import Flask, jsonify
 
+    from services.tasks import app as celery_app
+
     app = Flask(__name__)
 
-    @app.route('/users', methods=['POST', 'GET'])
+    @app.route('/users', methods=['GET'])
     def application():
-        _wait_for_provider()
-        res = requests.post('http://provider:9091/users', timeout=5)
-        res.raise_for_status()
-        return jsonify(res.json())
+        result = celery_app.send_task('skywalking.tasks.echo', args=['Despacito'], kwargs={'artist': 'Luis Fonsi'})
+        payload = result.get(timeout=20)
+        return jsonify(payload)
 
     PORT = 9090
-    app.run(host='0.0.0.0', port=PORT, debug=False)
+    app.run(host='0.0.0.0', port=PORT, debug=True)

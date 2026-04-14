@@ -15,149 +15,135 @@
 # limitations under the License.
 #
 
+import threading
+
 from skywalking import Layer, Component, config
 from skywalking.trace.context import get_context
 from skywalking.trace.tags import TagDbType, TagDbInstance, TagDbStatement
 
+try:
+    from pymongo import monitoring
+except ImportError:  # pragma: no cover - exercised in runtime environments with pymongo installed
+    monitoring = None
+
+    class _CommandListenerBase:
+        pass
+else:
+    _CommandListenerBase = monitoring.CommandListener
+
+
 link_vector = ['https://pymongo.readthedocs.io']
 support_matrix = {
     'pymongo': {
-        '>=3.7': ['3.11.*']  # TODO: "3.12" incompatible with all python versions, need investigation
+        '>=3.10': ['4.16.*']
     }
 }
 note = """"""
 
-
-def install():
-    from pymongo.bulk import _Bulk
-    from pymongo.cursor import Cursor
-    from pymongo.pool import SocketInfo
-
-    bulk_op_map = {
-        0: 'insert',
-        1: 'update',
-        2: 'delete'
-    }
-    # handle insert_many and bulk write
-    inject_bulk_write(_Bulk, bulk_op_map)
-
-    # handle find() & find_one()
-    inject_cursor(Cursor)
-
-    # handle other commands
-    inject_socket_info(SocketInfo)
+_IGNORED_COMMANDS = {
+    'hello',
+    'ismaster',
+}
+_INSTALLED = False
 
 
-def inject_socket_info(SocketInfo): # noqa
-    _command = SocketInfo.command
+class _PyMongoCommandListener(_CommandListenerBase):
+    def __init__(self):
+        self._active_spans = {}
+        self._lock = threading.Lock()
 
-    def _sw_command(this: SocketInfo, dbname, spec, *args, **kwargs):
-        # pymongo sends `ismaster` command continuously. ignore it.
-        if spec.get('ismaster') is None:
-            address = this.sock.getpeername()
-            peer = f'{address[0]}:{address[1]}'
-            context = get_context()
-
-            operation = list(spec.keys())[0]
-            sw_op = f'{operation.capitalize()}Operation'
-            with context.new_exit_span(op=f'MongoDB/{sw_op}', peer=peer, component=Component.MongoDB) as span:
-                result = _command(this, dbname, spec, *args, **kwargs)
-
-                span.layer = Layer.Database
-                span.tag(TagDbType('MongoDB'))
-                span.tag(TagDbInstance(dbname))
-
-                if config.plugin_pymongo_trace_parameters:
-                    # get filters
-                    filters = _get_filter(operation, spec)
-                    max_len = config.plugin_pymongo_parameters_max_length
-                    filters = f'{filters[0:max_len]}...' if len(filters) > max_len else filters
-                    span.tag(TagDbStatement(filters))
-
-        else:
-            result = _command(this, dbname, spec, *args, **kwargs)
-
-        return result
-
-    SocketInfo.command = _sw_command
-
-
-def _get_filter(request_type, spec):
-    """
-    :param request_type: the request param send to MongoDB
-    :param spec: maybe a bson.SON class or a dict
-    :return: filter string
-    """
-    from bson import SON
-
-    if isinstance(spec, SON):
-        spec = spec.to_dict()
-        spec.pop(request_type)
-    elif isinstance(spec, dict):
-        spec = dict(spec)
-        spec.pop(request_type)
-
-    return f'{request_type} {str(spec)}'
-
-
-def inject_bulk_write(_Bulk, bulk_op_map): # noqa
-    _execute = _Bulk.execute
-
-    def _sw_execute(this: _Bulk, *args, **kwargs):
-        nodes = this.collection.database.client.nodes
-        peer = ','.join([f'{address[0]}:{address[1]}' for address in nodes])
-        context = get_context()
-
-        sw_op = 'MixedBulkWriteOperation'
-        with context.new_exit_span(op=f'MongoDB/{sw_op}', peer=peer, component=Component.MongoDB) as span:
-            span.layer = Layer.Database
-
-            bulk_result = _execute(this, *args, **kwargs)
-
-            span.tag(TagDbType('MongoDB'))
-            span.tag(TagDbInstance(this.collection.database.name))
-            if config.plugin_pymongo_trace_parameters:
-                filters = ''
-                bulk_ops = this.ops
-                for bulk_op in bulk_ops:
-                    opname = bulk_op_map.get(bulk_op[0])
-                    _filter = f'{opname} {str(bulk_op[1])}'
-                    filters = f'{filters + _filter} '
-
-                max_len = config.plugin_pymongo_parameters_max_length
-                filters = f'{filters[0:max_len]}...' if len(filters) > max_len else filters
-                span.tag(TagDbStatement(filters))
-
-            return bulk_result
-
-    _Bulk.execute = _sw_execute
-
-
-def inject_cursor(Cursor): # noqa
-    __send_message = Cursor._Cursor__send_message
-
-    def _sw_send_message(this: Cursor, operation):
-        nodes = this.collection.database.client.nodes
-        peer = ','.join([f'{address[0]}:{address[1]}' for address in nodes])
-
-        context = get_context()
-        op = 'FindOperation'
-
-        with context.new_exit_span(op=f'MongoDB/{op}', peer=peer, component=Component.MongoDB) as span:
-            span.layer = Layer.Database
-
-            # __send_message return nothing
-            __send_message(this, operation)
-
-            span.tag(TagDbType('MongoDB'))
-            span.tag(TagDbInstance(this.collection.database.name))
-
-            if config.plugin_pymongo_trace_parameters:
-                filters = f'find {str(operation.spec)}'
-                max_len = config.plugin_pymongo_parameters_max_length
-                filters = f'{filters[0:max_len]}...' if len(filters) > max_len else filters
-                span.tag(TagDbStatement(filters))
-
+    def started(self, event):
+        command_name = event.command_name.lower()
+        if command_name in _IGNORED_COMMANDS:
             return
 
-    Cursor._Cursor__send_message = _sw_send_message
+        span = get_context().new_exit_span(
+            op=f'MongoDB/{_operation_name(command_name)}',
+            peer=_format_peer(event.connection_id),
+            component=Component.MongoDB,
+        )
+        span.layer = Layer.Database
+        span.tag(TagDbType('MongoDB'))
+        span.tag(TagDbInstance(event.database_name))
+
+        if config.plugin_pymongo_trace_parameters:
+            span.tag(TagDbStatement(_truncate(_format_statement(command_name, event.command))))
+
+        span.start()
+
+        with self._lock:
+            self._active_spans[_event_key(event)] = span
+
+    def succeeded(self, event):
+        self._finish(event)
+
+    def failed(self, event):
+        self._finish(event, failure=getattr(event, 'failure', None))
+
+    def _finish(self, event, failure=None):
+        with self._lock:
+            span = self._active_spans.pop(_event_key(event), None)
+
+        if span is None:
+            return
+
+        if failure is not None:
+            span.log(Exception(str(failure)))
+
+        span.stop()
+
+
+_LISTENER = _PyMongoCommandListener()
+
+
+def install():
+    global _INSTALLED
+
+    if _INSTALLED:
+        return
+
+    if monitoring is None:
+        raise ImportError('pymongo.monitoring is unavailable')
+
+    monitoring.register(_LISTENER)
+    _INSTALLED = True
+
+
+def _event_key(event):
+    connection_id = getattr(event, 'connection_id', None)
+    if isinstance(connection_id, list):
+        connection_id = tuple(connection_id)
+
+    return (
+        threading.get_ident(),
+        getattr(event, 'request_id', None),
+        getattr(event, 'operation_id', None),
+        connection_id,
+    )
+
+
+def _operation_name(command_name):
+    return f'{command_name.capitalize()}Operation'
+
+
+def _format_peer(connection_id):
+    if isinstance(connection_id, (list, tuple)) and len(connection_id) >= 2:
+        return f'{connection_id[0]}:{connection_id[1]}'
+
+    return str(connection_id)
+
+
+def _format_statement(command_name, command):
+    if hasattr(command, 'to_dict'):
+        command = command.to_dict()
+
+    if isinstance(command, dict):
+        command = dict(command)
+        command.pop(command_name, None)
+
+    return f'{command_name} {command}'
+
+
+def _truncate(statement):
+    max_len = config.plugin_pymongo_parameters_max_length
+    return f'{statement[0:max_len]}...' if len(statement) > max_len else statement
