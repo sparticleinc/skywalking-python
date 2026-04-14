@@ -17,7 +17,7 @@ or a limitation of SkyWalking auto-instrumentation (welcome to contribute!)
 ### Plugin Support Table
 | Library | Python Version - Lib Version | Plugin Name |
 | :--- | :--- | :--- |
-| [aiohttp](https://docs.aiohttp.org) | Python >=3.7 - ['3.7.*'];  | `sw_aiohttp` |
+| [aiohttp](https://docs.aiohttp.org) | Python >=3.10 - ['3.9.*', '3.13.*'];  | `sw_aiohttp` |
 | [aioredis](https://aioredis.readthedocs.io/) | Python >=3.7 - ['2.0.*'];  | `sw_aioredis` |
 | [aiormq](https://pypi.org/project/aiormq/) | Python >=3.7 - ['6.3', '6.4'];  | `sw_aiormq` |
 | [amqp](https://pypi.org/project/amqp/) | Python >=3.7 - ['2.6.1'];  | `sw_amqp` |
@@ -28,12 +28,12 @@ or a limitation of SkyWalking auto-instrumentation (welcome to contribute!)
 | [django](https://www.djangoproject.com/) | Python >=3.7 - ['3.2'];  | `sw_django` |
 | [elasticsearch](https://github.com/elastic/elasticsearch-py) | Python >=3.7 - ['7.13', '7.14', '7.15'];  | `sw_elasticsearch` |
 | [hug](https://falcon.readthedocs.io/en/stable/) | Python >=3.11 - NOT SUPPORTED YET; Python >=3.10 - ['2.5', '2.6']; Python >=3.7 - ['2.4.1', '2.5', '2.6'];  | `sw_falcon` |
-| [fastapi](https://fastapi.tiangolo.com) | Python >=3.7 - ['0.89.*', '0.88.*'];  | `sw_fastapi` |
+| [fastapi](https://fastapi.tiangolo.com) | Python >=3.10 - ['0.89.*', '0.135.*'];  | `sw_fastapi` |
 | [flask](https://flask.palletsprojects.com) | Python >=3.7 - ['2.0'];  | `sw_flask` |
 | [happybase](https://happybase.readthedocs.io) | Python >=3.7 - ['1.2.0'];  | `sw_happybase` |
 | [http_server](https://docs.python.org/3/library/http.server.html) | Python >=3.7 - ['*'];  | `sw_http_server` |
 | [werkzeug](https://werkzeug.palletsprojects.com/) | Python >=3.7 - ['1.0.1', '2.0'];  | `sw_http_server` |
-| [httpx](https://www.python-httpx.org/) | Python >=3.7 - ['0.23.*', '0.22.*'];  | `sw_httpx` |
+| [httpx](https://www.python-httpx.org/) | Python >=3.10 - ['0.23.*', '0.28.*'];  | `sw_httpx` |
 | [kafka-python](https://kafka-python.readthedocs.io) | Python >=3.7 - ['2.0'];  | `sw_kafka` |
 | [loguru](https://pypi.org/project/loguru/) | Python >=3.7 - ['0.6.0', '0.7.0'];  | `sw_loguru` |
 | [mysqlclient](https://mysqlclient.readthedocs.io/) | Python >=3.7 - ['2.1.*'];  | `sw_mysqlclient` |
@@ -49,7 +49,7 @@ or a limitation of SkyWalking auto-instrumentation (welcome to contribute!)
 | [tornado](https://www.tornadoweb.org) | Python >=3.7 - ['6.0', '6.1'];  | `sw_tornado` |
 | [urllib3](https://urllib3.readthedocs.io/en/latest/) | Python >=3.7 - ['1.26', '1.25'];  | `sw_urllib3` |
 | [urllib_request](https://docs.python.org/3/library/urllib.request.html) | Python >=3.7 - ['*'];  | `sw_urllib_request` |
-| [websockets](https://websockets.readthedocs.io) | Python >=3.7 - ['10.3', '10.4'];  | `sw_websockets` |
+| [websockets](https://websockets.readthedocs.io) | Python >=3.10 - ['10.4', '16.0'];  | `sw_websockets` |
 ### Notes
 - The celery server running with "celery -A ..." should be run with the HTTP protocol
 as it uses multiprocessing by default which is not compatible with the gRPC protocol implementation

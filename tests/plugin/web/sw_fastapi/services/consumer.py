@@ -15,9 +15,15 @@
 # limitations under the License.
 #
 import requests
-from websockets.client import connect
+import inspect
+try:
+    from websockets.asyncio.client import connect
+except ImportError:
+    from websockets.client import connect
 
 import asyncio
+
+CONNECT_SUPPORTS_ADDITIONAL_HEADERS = 'additional_headers' in inspect.signature(connect).parameters
 
 if __name__ == '__main__':
     from fastapi import FastAPI
@@ -32,7 +38,10 @@ if __name__ == '__main__':
         return {'http': res.json(), 'websocket': websocket_pong}
 
     async def websocket_ping():
-        async with connect('ws://provider:9091/ws', extra_headers=None) as websocket:
+        kwargs = {'additional_headers': None} if CONNECT_SUPPORTS_ADDITIONAL_HEADERS else {'extra_headers': None}
+        websocket_ctx = connect('ws://provider:9091/ws', **kwargs)
+
+        async with websocket_ctx as websocket:
             await websocket.send('Ping')
 
             response = await websocket.recv()

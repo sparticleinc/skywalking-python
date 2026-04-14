@@ -43,12 +43,13 @@ def prepare():
 def docker_compose(request: FixtureRequest, prepare: Callable, version: str) -> None:
     module = request.module
     cwd = dirname(inspect.getfile(module))
+    os.environ.setdefault('PYTHONNOUSERSITE', '1')
 
     if version:
         with open(os.path.join(cwd, 'requirements.txt'), mode='w') as req:
             req.write(version)
 
-    with DockerCompose(filepath=cwd) as compose:
+    with DockerCompose(context=cwd, compose_file_name='docker-compose.yml', wait=False) as compose:
         exception = None
         exception_delay = 0
         stdout, stderr = None, None

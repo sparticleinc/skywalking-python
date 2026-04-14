@@ -21,7 +21,7 @@ from skywalking.trace.tags import TagHttpMethod, TagHttpURL, TagHttpStatusMsg
 link_vector = ['https://websockets.readthedocs.io']
 support_matrix = {
     'websockets': {
-        '>=3.7': ['10.3', '10.4']
+        '>=3.10': ['10.4', '16.0']
     }
 }
 note = """The websocket instrumentation only traces client side connection handshake,
@@ -33,6 +33,8 @@ by either injecting sw8 headers or propagate the trace context in a separate mes
 
 
 def install():
+    from urllib.parse import urlsplit
+
     from websockets.legacy.client import WebSocketClientProtocol
     _protocol_handshake_client = WebSocketClientProtocol.handshake
 
@@ -74,6 +76,48 @@ def install():
                 span.tag(TagHttpStatusMsg(status_msg))
 
     WebSocketClientProtocol.handshake = _sw_protocol_handshake_client
+
+    try:
+        from websockets.asyncio.client import connect as AsyncConnect
+
+        _async_connect_await_impl = AsyncConnect.__await_impl__
+
+        async def _sw_async_connect_await_impl(self):
+            parsed = urlsplit(self.uri)
+            port = parsed.port or (443 if parsed.scheme == 'wss' else 80)
+            span = get_context().new_exit_span(op=parsed.path or '/', peer=f'{parsed.hostname}:{port}',
+                                               component=Component.Websockets)
+            with span:
+                carrier = span.inject()
+                span.layer = Layer.Http
+
+                headers = self.additional_headers
+                if headers is None:
+                    headers = {}
+                elif not isinstance(headers, dict):
+                    headers = dict(headers)
+
+                for item in carrier:
+                    headers[item.key] = item.val
+
+                self.additional_headers = headers
+
+                span.tag(TagHttpMethod('websocket.connect'))
+                span.tag(TagHttpURL(self.uri))
+                status_msg = 'connection open'
+                try:
+                    return await _async_connect_await_impl(self)
+                except Exception as e:
+                    span.error_occurred = True
+                    span.log(e)
+                    status_msg = 'invalid handshake'
+                    raise e
+                finally:
+                    span.tag(TagHttpStatusMsg(status_msg))
+
+        AsyncConnect.__await_impl__ = _sw_async_connect_await_impl
+    except ImportError:
+        pass
 
     # To trace per message transactions
     # _send = WebSocketCommonProtocol.send

@@ -23,7 +23,7 @@ from skywalking.trace.tags import TagHttpMethod, TagHttpURL, TagHttpStatusCode
 link_vector = ['https://www.python-httpx.org/']
 support_matrix = {
     'httpx': {
-        '>=3.7': ['0.23.*', '0.22.*']
+        '>=3.10': ['0.23.*', '0.28.*']
     }
 }
 note = """"""
@@ -39,9 +39,10 @@ def install():
     async def _sw_async_send(self, request, *, stream=False, auth=USE_CLIENT_DEFAULT,
                              follow_redirects=USE_CLIENT_DEFAULT, ):
         url_object = request.url
+        peer = f'{url_object.host or ""}:{url_object.port or ""}'
 
         span = NoopSpan(NoopContext()) if config.ignore_http_method_check(
-            request.method) else get_context().new_exit_span(op=url_object.path or '/', peer=url_object.netloc.decode(),
+            request.method) else get_context().new_exit_span(op=url_object.path or '/', peer=peer,
                                                              component=Component.HTTPX)
         with span:
             carrier = span.inject()
@@ -53,7 +54,10 @@ def install():
                 request.headers[item.key] = item.val
 
             span.tag(TagHttpMethod(request.method.upper()))
-            url_safe = str(url_object).replace(url_object.username, '').replace(url_object.password, '')
+            try:
+                url_safe = str(url_object.copy_with(username=None, password=None))
+            except Exception:
+                url_safe = str(url_object)
 
             span.tag(TagHttpURL(url_safe))
 
@@ -71,9 +75,10 @@ def install():
 
     def _sw_send(self, request, *, stream=False, auth=USE_CLIENT_DEFAULT, follow_redirects=USE_CLIENT_DEFAULT, ):
         url_object = request.url
+        peer = f'{url_object.host or ""}:{url_object.port or ""}'
 
         span = NoopSpan(NoopContext()) if config.ignore_http_method_check(
-            request.method) else get_context().new_exit_span(op=url_object.path or '/', peer=url_object.netloc.decode(),
+            request.method) else get_context().new_exit_span(op=url_object.path or '/', peer=peer,
                                                              component=Component.HTTPX)
         with span:
             carrier = span.inject()
@@ -85,7 +90,10 @@ def install():
                 request.headers[item.key] = item.val
 
             span.tag(TagHttpMethod(request.method.upper()))
-            url_safe = str(url_object).replace(url_object.username, '').replace(url_object.password, '')
+            try:
+                url_safe = str(url_object.copy_with(username=None, password=None))
+            except Exception:
+                url_safe = str(url_object)
 
             span.tag(TagHttpURL(url_safe))
 

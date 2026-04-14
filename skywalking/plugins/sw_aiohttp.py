@@ -24,7 +24,7 @@ from skywalking.trace.tags import TagHttpMethod, TagHttpURL, TagHttpStatusCode
 link_vector = ['https://docs.aiohttp.org']
 support_matrix = {
     'aiohttp': {
-        '>=3.7': ['3.7.*']  # TODO: support 3.8
+        '>=3.10': ['3.9.*', '3.13.*']
     }
 }
 note = """"""
@@ -35,6 +35,9 @@ def install():
     from aiohttp.web_protocol import RequestHandler
     from multidict import CIMultiDict, MultiDict, MultiDictProxy
     from yarl import URL
+
+    def _format_request_url(request):
+        return f'{request.scheme}://{request.host}{request.path_qs}'
 
     async def _sw_request(self: ClientSession, method: str, str_or_url, **kwargs):
         url = URL(str_or_url).with_user(None).with_password(None)
@@ -72,7 +75,7 @@ def install():
     _request = ClientSession._request
     ClientSession._request = _sw_request
 
-    async def _sw_handle_request(self, request, start_time: float):
+    async def _sw_handle_request(self, request, start_time: float, *args, **kwargs):
         carrier = Carrier()
         method = request.method
 
@@ -95,9 +98,9 @@ def install():
                 span.peer = f'{peer_name}'
 
             span.tag(TagHttpMethod(method))  # pyre-ignore
-            span.tag(TagHttpURL(str(request.url)))  # pyre-ignore
+            span.tag(TagHttpURL(_format_request_url(request)))  # pyre-ignore
 
-            resp, reset = await _handle_request(self, request, start_time)
+            resp, reset = await _handle_request(self, request, start_time, *args, **kwargs)
 
             span.tag(TagHttpStatusCode(resp.status))
 
