@@ -71,4 +71,4 @@ catalog:
       - name: "Image Release Guidance"
         path: "/en/contribution/How-to-release-docker"
   - name: "Changelog"
-    path: "https://github.com/apache/skywalking-python/blob/master/CHANGELOG.md"
+    path: "https://github.com/sparticleinc/skywalking-python/blob/main/CHANGELOG.md"

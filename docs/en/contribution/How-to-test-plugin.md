@@ -1,10 +1,10 @@
 # Plugin Test
 
-Plugin tests are required and should pass before a new plugin is able to merge into the master branch.
+Plugin tests are required and should pass before a new plugin is able to merge into the `main` branch.
 Specify a support matrix in each plugin in the `skywalking/plugins` folder, along with their website links,
 the matrix and links will be used for plugin support table documentation generation for this doc [Plugins.md](../setup/Plugins.md).
 
-Use `make doc-gen` to generate a table and paste into `Plugins.md` after all test passes.
+Use `make doc-gen` to regenerate `Plugins.md` after all tests pass.
 
 ## SkyWalking Agent Test Tool (Mock Collector)
 
@@ -38,8 +38,8 @@ This can be done through the `/dataValidate` of the mock collector, say `http://
 If we want to test the plugin for the built-in library `http`, we will:
 
 1. Build a tested service, which sets up an HTTP server by `http` library, and exposes an HTTP endpoint to be triggered in the test codes, say `/trigger`, 
-take this [provider service](https://github.com/apache/skywalking-python/blob/master/tests/plugin/http/sw_http/services/provider.py) as example.
+take this [provider service](https://github.com/sparticleinc/skywalking-python/blob/main/tests/plugin/http/sw_http/services/provider.py) as example.
 2. Compose a `docker-compose.yml` file, orchestrating the service built in step 1 and the mock collector, 
-take this [docker-compose.yml](https://github.com/apache/skywalking-python/blob/master/tests/plugin/http/sw_http/docker-compose.yml) as an example.
+take this [docker-compose.yml](https://github.com/sparticleinc/skywalking-python/blob/main/tests/plugin/http/sw_http/docker-compose.yml) as an example.
 3. Write test codes to trigger the endpoint in step 1, and send the expected data file to the mock collector to verify, 
-take this [test](https://github.com/apache/skywalking-python/blob/master/tests/plugin/http/sw_http/test_http.py) as example.
+take this [test](https://github.com/sparticleinc/skywalking-python/blob/main/tests/plugin/http/sw_http/test_http.py) as example.

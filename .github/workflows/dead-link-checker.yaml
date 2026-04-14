@@ -21,7 +21,7 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - main
   schedule:
     - cron: '0 18 * * *'
 
@@ -33,9 +33,9 @@ jobs:
   CheckDeadLinks:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    if: (github.event_name == 'schedule' && github.repository == 'apache/skywalking-python') || (github.event_name != 'schedule')
+    if: (github.event_name == 'schedule' && github.repository == 'sparticleinc/skywalking-python') || (github.event_name != 'schedule')
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
           use-quiet-mode: 'no'

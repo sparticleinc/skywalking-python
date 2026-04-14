@@ -51,7 +51,11 @@ endif
 .PHONY: gen
 gen:
 	poetry run pip install grpcio-tools packaging
-	poetry run python3 tools/grpc_code_gen.py
+	@if find protocol -name "*.proto" -print -quit | grep -q .; then \
+		poetry run python3 tools/grpc_code_gen.py; \
+	else \
+		echo "Skipping gRPC code generation because no .proto sources are present in ./protocol"; \
+	fi
 
 .PHONY: gen-basic
 gen-basic:
@@ -95,7 +99,7 @@ license: clean
 .PHONY: test
 test: env
 	sudo apt-get -y install jq
-	docker build --build-arg BASE_PYTHON_IMAGE=3.7-slim -t apache/skywalking-python-agent:latest-plugin --no-cache . -f tests/plugin/Dockerfile.plugin
+	docker build --build-arg BASE_PYTHON_IMAGE=3.10-slim -t apache/skywalking-python-agent:latest-plugin --no-cache . -f tests/plugin/Dockerfile.plugin
 	poetry run pytest -v $(bash tests/gather_test_paths.sh)
 
 .PHONY: package
@@ -122,7 +126,7 @@ push-image:
 # FIXME change to python based so we can run on windows
 clean:
 	rm -rf skywalking/protocol
-	rm -rf apache_skywalking.egg-info dist build
+	rm -rf apache_skywalking.egg-info sparticle_skywalking.egg-info dist build
 	rm -rf skywalking-python*.tgz*
 	find . -name "__pycache__" -exec rm -r {} +
 	find . -name ".pytest_cache" -exec rm -r {} +

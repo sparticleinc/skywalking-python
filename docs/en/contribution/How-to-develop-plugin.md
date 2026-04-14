@@ -14,7 +14,7 @@ You can always take [the existing plugins](../setup/Plugins.md) as examples, whi
    # The right side versions, should almost always use A.B.* to test the latest minor version of two recent major versions. 
    support_matrix = {
        'httpx': {
-           '>=3.7': ['0.23.*', '0.22.*']
+           '>=3.10': ['0.23.*', '0.22.*']
        }
    }
    # The note will be used when generating the plugin documentation for users.

@@ -95,8 +95,7 @@ agent_instance_properties_json: str = os.getenv('SW_AGENT_INSTANCE_PROPERTIES_JS
 # The agent will restart itself in any os.fork()-ed child process. Important Note: it's not suitable for
 # short-lived processes as each one will create a new instance in SkyWalking dashboard
 # in format of `service_instance-child(pid)`.
-# This feature may not work when a precise combination of gRPC + Python 3.7 + subprocess (not fork) is used together.
-# The agent will output a warning log when using on Python 3.7 for such a reason.
+# Legacy Python 3.7-specific caveats no longer apply because the package now requires Python 3.10+.
 agent_experimental_fork_support: bool = os.getenv('SW_AGENT_EXPERIMENTAL_FORK_SUPPORT', '').lower() == 'true'
 # DANGEROUS - This option controls the interval of each bulk report from telemetry data queues
 # Do not modify unless you have evaluated its impact given your service load.

@@ -1,4 +1,4 @@
-# Apache SkyWalking Python Image Release Guide
+# Sparticle SkyWalking Python Image Release Guide
 
 This documentation shows the way to build and push the SkyWalking Python images to DockerHub.
 
@@ -10,8 +10,8 @@ Before building the latest release of images, make sure an official release is p
 
 This process wil generate a list of images covering most used Python versions and variations(grpc/http/kafka) of the Python agent.
 
-The convenience images are published to Docker Hub and available from the `skywalking.docker.scarf.sh` endpoint.
-- `skywalking.docker.scarf.sh/apache/skywalking-python` ([Docker Hub](https://hub.docker.com/r/apache/skywalking-python))
+The convenience images are published to Docker Hub.
+- [Docker Hub](https://hub.docker.com/r/sparticleinc/skywalking-python)
 
 ## How to build
 

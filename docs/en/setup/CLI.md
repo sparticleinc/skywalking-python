@@ -96,7 +96,7 @@ From: `sw-python run command`
 To: `sw-python -d run command`
 
 Please attach the debug logs to the [SkyWalking Issues](https://github.com/apache/skywalking/issues) section if you believe it is a bug,
-[idea discussions](https://github.com/apache/skywalking/discussions) and [pull requests](https://github.com/apache/skywalking-python/pulls) are always welcomed.
+[idea discussions](https://github.com/apache/skywalking/discussions) and [pull requests](https://github.com/sparticleinc/skywalking-python/pulls) are always welcomed.
 
 
 ## Additional Remarks

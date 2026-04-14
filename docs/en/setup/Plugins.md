@@ -1,6 +1,10 @@
 # Supported Libraries
 This document is **automatically** generated from the SkyWalking Python testing matrix.
 
+The package itself requires Python 3.10+.
+Historical plugin ranges below may mention older Python versions because they describe past test coverage,
+not the current package installation floor.
+
 The column of versions only indicates the set of library versions tested in a best-effort manner.
 
 If you find newer major versions that are missing from the following table, and it's not documented as a limitation,

@@ -1,6 +1,6 @@
 ## Installation
 
-**SkyWalking Python agent requires SkyWalking 8.0+ and Python 3.7+**
+**SkyWalking Python agent requires SkyWalking 8.0+ and Python 3.10+**
 
 You can install the SkyWalking Python agent via various ways described next.
 
@@ -55,17 +55,17 @@ pip install sparticle-skywalking==1.0.6  # For example, pin to version 1.0.6 exp
 SkyWalking Python agent provides convenient dockerfile
 and images for easy integration utilizing its [auto-bootstrap](CLI.md) capability.
 
-Simply pull SkyWalking Python image from [Docker Hub](https://hub.docker.com/r/apache/skywalking-python)
+Simply pull SkyWalking Python image from [Docker Hub](https://hub.docker.com/r/sparticleinc/skywalking-python)
 based on desired agent version, protocol and Python version.
 
 ```dockerfile
-FROM apache/skywalking-python:0.8.0-grpc-py3.10
+FROM sparticleinc/skywalking-python:1.0.6-grpc-py3.12
 
 # ... build your Python application
 
 # If you prefer compact images (built from official Python slim image)
 
-FROM apache/skywalking-python:0.8.0-grpc-py3.10-slim
+FROM sparticleinc/skywalking-python:1.0.6-grpc-py3.12-slim
 
 # ... build your Python application
 ```

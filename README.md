@@ -33,7 +33,7 @@ It provides the native tracing/metrics/logging/profiling abilities for Python pr
 
 ## Installation Requirements
 
-SkyWalking Python Agent requires [Apache SkyWalking 8.0+](https://skywalking.apache.org/downloads/#SkyWalkingAPM) and Python 3.7+.
+SkyWalking Python Agent requires [Apache SkyWalking 8.0+](https://skywalking.apache.org/downloads/#SkyWalkingAPM) and Python 3.10+.
 
 ```bash
 pip install "sparticle-skywalking"

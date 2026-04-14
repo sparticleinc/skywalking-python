@@ -16,10 +16,13 @@
 #
 
 import unittest
+from importlib import metadata
+from types import SimpleNamespace
+from unittest import mock
 
 from packaging import version
 
-from skywalking.plugins import check
+from skywalking.plugins import check, pkg_version_check
 from skywalking.utils.comparator import operators
 
 
@@ -99,6 +102,24 @@ class TestVersionCheck(unittest.TestCase):
         self.assertFalse(check('<=1.7.0', current_version))
         self.assertFalse(check('==1.0.0', current_version))
         self.assertFalse(check('!=1.8.0', current_version))
+
+    def test_pkg_version_check_with_matching_distribution(self):
+        plugin = SimpleNamespace(version_rule={'name': 'demo-lib', 'rules': ['>=1.0.0 <2.0.0']})
+
+        with mock.patch('skywalking.plugins.metadata.version', return_value='1.8.0'):
+            self.assertTrue(pkg_version_check(plugin))
+
+    def test_pkg_version_check_with_non_matching_distribution(self):
+        plugin = SimpleNamespace(version_rule={'name': 'demo-lib', 'rules': ['>=2.0.0']})
+
+        with mock.patch('skywalking.plugins.metadata.version', return_value='1.8.0'):
+            self.assertFalse(pkg_version_check(plugin))
+
+    def test_pkg_version_check_when_distribution_is_missing(self):
+        plugin = SimpleNamespace(version_rule={'name': 'demo-lib', 'rules': ['>=2.0.0']})
+
+        with mock.patch('skywalking.plugins.metadata.version', side_effect=metadata.PackageNotFoundError):
+            self.assertTrue(pkg_version_check(plugin))
 
 
 if __name__ == '__main__':

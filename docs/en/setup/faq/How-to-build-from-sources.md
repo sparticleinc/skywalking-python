@@ -3,7 +3,7 @@
 **Download the source tar from the [official website](http://skywalking.apache.org/downloads/), 
 and run the following commands to build from source**
 
-**Make sure you have Python 3.7+ and the `python3` command available**
+**Make sure you have Python 3.10+ and the `python3` command available**
 
 ```shell
 $ tar -zxf skywalking-python-src-<version>.tgz
@@ -16,7 +16,7 @@ for example, you want to try the latest features that are not released yet,
 please clone the source codes from GitHub and `make install` it:
 
 ```shell
-$ git clone https://github.com/apache/skywalking-python
+$ git clone https://github.com/sparticleinc/skywalking-python
 $ cd skywalking-python
 $ git submodule update --init
 $ make install

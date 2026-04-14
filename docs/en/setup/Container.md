@@ -3,22 +3,20 @@
 **Docker images are not official ASF releases but provided for convenience. Recommended usage is always to build the
 source**
 
-This image hosts the SkyWalking Python agent package on top of official Python base images (full & slim) providing support from 
-Python 3.7 - 3.11.
+This image hosts the SkyWalking Python agent package on top of official Python base images (full & slim) providing support from
+Python 3.10 - 3.14.
 
 ## How to use this image
 
-The images are hosted at [Docker Hub](https://hub.docker.com/r/apache/skywalking-python) and available from the `skywalking.docker.scarf.sh` endpoint.
-
-`skywalking.docker.scarf.sh/apache/skywalking-python`
+The images are hosted at [Docker Hub](https://hub.docker.com/r/sparticleinc/skywalking-python).
 
 ### Build your Python application image on top of this image
 
 Start by pulling the `skywalking-python` image as the base of your application image.
-Refer to [Docker Hub](https://hub.docker.com/r/apache/skywalking-python) for the list of tags available.
+Refer to [Docker Hub](https://hub.docker.com/r/sparticleinc/skywalking-python) for the list of tags available.
 
 ```dockerfile
-FROM apache/skywalking-python:0.7.0-grpc-py3.9
+FROM sparticleinc/skywalking-python:1.0.6-grpc-py3.12
 
 # ... build your Python application
 ```

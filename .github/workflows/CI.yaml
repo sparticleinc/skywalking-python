@@ -15,13 +15,13 @@
 # limitations under the License.
 
 name: CI
-# This process will only run upon scheduled event on upstream master
+# This process will only run upon scheduled event on the maintained main repository
 # or upon pull request when actual code or CI flow is changed
 on:
   pull_request:
   push:
     branches:
-      - master
+      - main
   schedule:
     - cron: '0 18 * * *'
 
@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source codes
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Check License
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source codes
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Check plugin doc
@@ -73,7 +73,7 @@ jobs:
     outputs:
       agent: ${{ steps.filter.outputs.agent }}
     steps:
-      - uses: actions/checkout@v3  # required for push event
+      - uses: actions/checkout@v4  # required for push event
       - name: Check for file changes
         uses: getsentry/paths-filter@v2.11.1
         id: filter
@@ -104,10 +104,10 @@ jobs:
     needs: [ license-and-lint, changes, plugin-doc-check ]
     if: |
       ( always() && ! cancelled() ) &&
-      ((github.event_name == 'schedule' && github.repository == 'apache/skywalking-python') || needs.changes.outputs.agent == 'true')
+      ((github.event_name == 'schedule' && github.repository == 'sparticleinc/skywalking-python') || needs.changes.outputs.agent == 'true')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - id: set-matrix
         run: |
           sudo apt-get install jq
@@ -121,17 +121,17 @@ jobs:
     needs: [ license-and-lint, changes, plugin-doc-check, prep-plugin-and-unit-tests ]
     if: |
       ( always() && ! cancelled() ) &&
-      ((github.event_name == 'schedule' && github.repository == 'apache/skywalking-python') || needs.changes.outputs.agent == 'true')
+      ((github.event_name == 'schedule' && github.repository == 'sparticleinc/skywalking-python') || needs.changes.outputs.agent == 'true')
     runs-on: ubuntu-latest
     strategy:
       matrix: # may support pypy in the future
-        python-version: [ "3.7-slim", "3.8-slim", "3.9-slim", "3.10-slim", "3.11-slim", "3.12-slim", "3.13-slim", "3.14-slim" ]
+        python-version: [ "3.10-slim", "3.11-slim", "3.12-slim", "3.13-slim", "3.14-slim" ]
       fail-fast: false
     env:
       BASE_PYTHON_IMAGE: ${{ matrix.python-version }}
     steps:
       - name: Checkout source codes
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Build SkyWalking Python agent base plugin image
@@ -139,7 +139,7 @@ jobs:
           docker build --build-arg BASE_PYTHON_IMAGE -t apache/skywalking-python-agent:latest-plugin --no-cache . -f tests/plugin/Dockerfile.plugin
           docker save -o docker-images-skywalking-python-plugin-${{ matrix.python-version }}.tar apache/skywalking-python-agent:latest-plugin
       - name: Upload docker image with specific python version
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: docker-images-skywalking-python-plugin-${{ matrix.python-version }}
           path: docker-images-skywalking-python-plugin-${{ matrix.python-version }}.tar
@@ -152,23 +152,23 @@ jobs:
     needs: [ license-and-lint, changes, plugin-doc-check, docker-plugin, prep-plugin-and-unit-tests ]
     if: |
       ( always() && ! cancelled() ) &&
-      ((github.event_name == 'schedule' && github.repository == 'apache/skywalking-python') || needs.changes.outputs.agent == 'true')
+      ((github.event_name == 'schedule' && github.repository == 'sparticleinc/skywalking-python') || needs.changes.outputs.agent == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       matrix:
-        python-version: [ "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
         test-path: ${{fromJson(needs.prep-plugin-and-unit-tests.outputs.matrix)}}
       fail-fast: false
     env:
       BASE_PYTHON_IMAGE: ${{ matrix.python-version }}
     steps:
       - name: Checkout source codes
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Pull SkyWalking Python agent base image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: docker-images-skywalking-python-plugin-${{ matrix.python-version }}-slim
           path: docker-images
@@ -176,7 +176,7 @@ jobs:
         run: find docker-images -name "*.tar" -exec docker load -i {} \;
       - name: Set up Python ${{ matrix.python-version }}
         # This step is crucial for correct plugin matrix in test orchestration
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Run unit tests
@@ -190,18 +190,18 @@ jobs:
     needs: [ license-and-lint, changes, plugin-doc-check ]
     if: |
       ( always() && ! cancelled() ) && 
-      ((github.event_name == 'schedule' && github.repository == 'apache/skywalking-python') || needs.changes.outputs.agent == 'true')
+      ((github.event_name == 'schedule' && github.repository == 'sparticleinc/skywalking-python') || needs.changes.outputs.agent == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       matrix:
-        python-image-variant: [ "3.7-slim", "3.8-slim", "3.9-slim", "3.10-slim", "3.11-slim", "3.12-slim", "3.13-slim", "3.14-slim" ]
+        python-image-variant: [ "3.10-slim", "3.11-slim", "3.12-slim", "3.13-slim", "3.14-slim" ]
       fail-fast: false
     env:
       BASE_PYTHON_IMAGE: ${{ matrix.python-image-variant }}
     steps:
       - name: Checkout source codes
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Build SkyWalking Python agent base e2e image
@@ -209,7 +209,7 @@ jobs:
           docker build --build-arg BASE_PYTHON_IMAGE -t apache/skywalking-python-agent:latest-e2e --no-cache . -f tests/e2e/base/Dockerfile.e2e
           docker save -o docker-images-skywalking-python-e2e-${{ matrix.python-image-variant }}.tar apache/skywalking-python-agent:latest-e2e
       - name: Upload docker image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: docker-images-skywalking-python-e2e-${{ matrix.python-image-variant }}
           path: docker-images-skywalking-python-e2e-${{ matrix.python-image-variant }}.tar
@@ -221,12 +221,12 @@ jobs:
     needs: [ license-and-lint, changes, plugin-doc-check, docker-e2e ]
     if: |
       ( always() && ! cancelled() ) && 
-      ((github.event_name == 'schedule' && github.repository == 'apache/skywalking-python') || needs.changes.outputs.agent == 'true')
+      ((github.event_name == 'schedule' && github.repository == 'sparticleinc/skywalking-python') || needs.changes.outputs.agent == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       matrix:
-        python-image-variant: [ "3.7-slim", "3.8-slim", "3.9-slim", "3.10-slim", "3.11-slim", "3.12-slim", "3.13-slim", "3.14-slim" ]
+        python-image-variant: [ "3.10-slim", "3.11-slim", "3.12-slim", "3.13-slim", "3.14-slim" ]
         case:
           - name: gRPC-single-process
             path: tests/e2e/case/grpc/single/e2e.yaml
@@ -253,11 +253,11 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout source codes
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Pull SkyWalking Python agent base image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: docker-images-skywalking-python-e2e-${{ matrix.python-image-variant }}
           path: docker-images
@@ -269,7 +269,7 @@ jobs:
           log-dir: /tmp/e2e-logs
           e2e-file: ${{ matrix.case.path }}
       - name: Upload Logs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ failure() }}
         with:
           name: e2e_logs_${{ matrix.case.name }}_${{ matrix.python-image-variant }}

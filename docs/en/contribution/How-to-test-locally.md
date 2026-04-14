@@ -24,6 +24,6 @@ Alternatively, you can run full tests via our GitHub action workflow on your own
 tricky to setup for new contributors. 
 
 To do so, you need to fork this repo on GitHub and enable GitHub actions on your forked repo. Then, you can simply push your changes and
-open a Pull Request to **the fork's** master branch. 
+open a Pull Request to **the fork's** `main` branch.
 
 Note: GitHub automatically targets Pull Requests to the upstream repo, be careful when you open them to avoid accidental PRs to upstream.

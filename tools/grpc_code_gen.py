@@ -17,12 +17,16 @@
 import glob
 import os
 import re
+import sys
+from importlib import metadata
+from pathlib import Path
 
-import pkg_resources
 from grpc_tools import protoc
 from packaging import version
 
-grpc_tools_version = pkg_resources.get_distribution('grpcio-tools').version
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+grpc_tools_version = metadata.version('grpcio-tools')
 dest_dir = 'skywalking/protocol'
 src_dir = 'protocol'
 
@@ -45,15 +49,15 @@ def codegen():
     if version.parse(grpc_tools_version) >= version.parse('1.49.0'):
         # https://github.com/grpc/grpc/issues/31247
         protoc_args += [f'--pyi_out={dest_dir}']
-    protoc_args += list(glob.iglob(f'{src_dir}/**/*.proto'))
+    protoc_args += list(glob.iglob(f'{src_dir}/**/*.proto', recursive=True))
     protoc.main(protoc_args)
 
-    for py_file in glob.iglob(os.path.join(dest_dir, '**/*.py')):
+    for py_file in glob.iglob(os.path.join(dest_dir, '**/*.py'), recursive=True):
         touch(os.path.join(os.path.dirname(py_file), '__init__.py'))
         with open(py_file, 'r+') as file:
             code = file.read()
             file.seek(0)
-            file.write(re.sub(r'from (.+) (import .+_pb2.*)', 'from ..\\1 \\2', code))
+            file.write(re.sub(r'from ((?!\.).+) (import .+_pb2.*)', 'from ..\\1 \\2', code))
             file.truncate()
 
 

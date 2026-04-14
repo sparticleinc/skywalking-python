@@ -18,12 +18,21 @@
 """
 A tool to generate test matrix report for SkyWalking Python Plugins
 """
+import importlib
 import pkgutil
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from skywalking.plugins import __path__ as plugins_path
 
 doc_head = """# Supported Libraries
 This document is **automatically** generated from the SkyWalking Python testing matrix.
+
+The package itself requires Python 3.10+.
+Historical plugin ranges below may mention older Python versions because they describe past test coverage,
+not the current package installation floor.
 
 The column of versions only indicates the set of library versions tested in a best-effort manner.
 
@@ -50,8 +59,8 @@ def generate_plugin_doc():
     """
     table_entries = []
     note_entries = []
-    for importer, modname, _ispkg in pkgutil.iter_modules(plugins_path):
-        plugin = importer.find_module(modname).load_module(modname)
+    for _importer, modname, _ispkg in pkgutil.iter_modules(plugins_path):
+        plugin = importlib.import_module(f'skywalking.plugins.{modname}')
 
         try:
             plugin_support_matrix = plugin.support_matrix  # type: dict
