@@ -40,16 +40,16 @@ def install():
         return f'{request.scheme}://{request.host}{request.path_qs}'
 
     async def _sw_request(self: ClientSession, method: str, str_or_url, **kwargs):
-        url = URL(str_or_url).with_user(None).with_password(None)
-        peer = f"{url.host or ''}:{url.port or ''}"
+        sanitized_url = URL(str_or_url).with_user(None).with_password(None)
+        peer = f"{sanitized_url.host or ''}:{sanitized_url.port or ''}"
 
         span = NoopSpan(NoopContext()) if config.ignore_http_method_check(method) \
-            else get_context().new_exit_span(op=url.path or '/', peer=peer, component=Component.AioHttp)
+            else get_context().new_exit_span(op=sanitized_url.path or '/', peer=peer, component=Component.AioHttp)
 
         with span:
             span.layer = Layer.Http
             span.tag(TagHttpMethod(method.upper()))  # pyre-ignore
-            span.tag(TagHttpURL(str(url.with_password(None))))  # pyre-ignore
+            span.tag(TagHttpURL(str(sanitized_url)))  # pyre-ignore
 
             carrier = span.inject()
             headers = kwargs.get('headers')

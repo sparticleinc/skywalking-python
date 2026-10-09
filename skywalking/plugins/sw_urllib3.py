@@ -23,18 +23,19 @@ from skywalking.trace.tags import TagHttpMethod, TagHttpURL, TagHttpStatusCode
 link_vector = ['https://urllib3.readthedocs.io/en/latest/']
 support_matrix = {
     'urllib3': {
-        '>=3.7': ['1.26', '1.25']
+        '>=3.10': ['2.8.*']
     }
 }
 note = """"""
 
 
 def install():
-    from urllib3.request import RequestMethods
+    from urllib3._request_methods import RequestMethods
 
     _request = RequestMethods.request
 
-    def _sw_request(this: RequestMethods, method, url, fields=None, headers=None, **urlopen_kw):
+    def _sw_request(this: RequestMethods, method, url, body=None, fields=None, headers=None,
+                    json=None, **urlopen_kw):
         from skywalking.utils.filter import sw_urlparse
 
         url_param = sw_urlparse(url)
@@ -55,7 +56,8 @@ def install():
             span.tag(TagHttpMethod(method.upper()))
             span.tag(TagHttpURL(url_param.geturl()))
 
-            res = _request(this, method, url, fields=fields, headers=headers, **urlopen_kw)
+            res = _request(this, method, url, body=body, fields=fields, headers=headers,
+                           json=json, **urlopen_kw)
 
             span.tag(TagHttpStatusCode(res.status))
             if res.status >= 400:

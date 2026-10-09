@@ -53,7 +53,7 @@ agent_protocol: str = os.getenv('SW_AGENT_PROTOCOL', 'grpc').lower()
 # The name of your awesome Python service
 agent_name: str = os.getenv('SW_AGENT_NAME', 'Python Service Name')
 # The name of this particular awesome Python service instance
-agent_instance_name: str = os.getenv('SW_AGENT_INSTANCE_NAME', str(uuid.uuid1()).replace('-', ''))
+agent_instance_name: str = os.getenv('SW_AGENT_INSTANCE_NAME', uuid.uuid4().hex)
 # The agent namespace of the Python service (available as tag and the suffix of service name)
 agent_namespace: str = os.getenv('SW_AGENT_NAMESPACE', '')
 # A list of host/port pairs to use for establishing the initial connection to your Kafka cluster.
