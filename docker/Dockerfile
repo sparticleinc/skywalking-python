@@ -28,7 +28,9 @@ RUN pip wheel psutil -w /tmp/dist/
 FROM base AS final
 COPY --from=builder /tmp/dist/*.whl /tmp/
 RUN pip install --upgrade pip
-RUN pip install /tmp/psutil*.whl /tmp/apache_skywalking*.whl
-RUN rm /tmp/apache_skywalking*.whl /tmp/psutil*.whl
+RUN pip install /tmp/psutil*.whl /tmp/sparticle_skywalking*.whl
+RUN rm /tmp/sparticle_skywalking*.whl /tmp/psutil*.whl
+ENV HOME=/tmp
+USER 65532:65532
 # So that the agent can be auto-started when container is started
 ENTRYPOINT ["sw-python"]

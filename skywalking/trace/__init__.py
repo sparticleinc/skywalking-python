@@ -24,7 +24,7 @@ _id = AtomicCounter()
 
 class ID(object):
     def __init__(self, raw_id: str = None):
-        self.value = raw_id or str(uuid.uuid1()).replace('-', '')
+        self.value = raw_id or uuid.uuid4().hex
 
     def __str__(self):
         return self.value

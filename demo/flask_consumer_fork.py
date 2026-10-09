@@ -38,10 +38,10 @@ app = Flask(__name__)
 
 @app.route('/', methods=['POST', 'GET'])
 def application():
-    res = requests.get('http://localhost:9999')
+    res = requests.get('http://localhost:9999', timeout=5)
     return res.json()
 
 
 if __name__ == '__main__':
     PORT = 9097 if pid == 0 else 9098  # 0 is child process
-    app.run(host='0.0.0.0', port=PORT, debug=False)  # RELOADER IS ALSO FORKED
+    app.run(host='127.0.0.1', port=PORT, debug=False)  # RELOADER IS ALSO FORKED

@@ -100,7 +100,7 @@ def create_entry(comment: str, config_index: int) -> str:
 
     # special case for randomly generated default value
     if configuration == 'agent_instance_name':
-        default_val = "str(uuid.uuid1()).replace('-', '')"
+        default_val = 'uuid.uuid4().hex'
     return f'| {configuration} | {env_var_name(configuration)} | {str(type_)} | {default_val} | {comment} |'
 
 

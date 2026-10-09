@@ -47,7 +47,7 @@ or a limitation of SkyWalking auto-instrumentation (welcome to contribute!)
 | [requests](https://requests.readthedocs.io/en/master/) | Python >=3.7 - ['2.26', '2.25'];  | `sw_requests` |
 | [sanic](https://sanic.readthedocs.io/en/latest) | Python >=3.10 - NOT SUPPORTED YET; Python >=3.7 - ['20.12'];  | `sw_sanic` |
 | [tornado](https://www.tornadoweb.org) | Python >=3.7 - ['6.0', '6.1'];  | `sw_tornado` |
-| [urllib3](https://urllib3.readthedocs.io/en/latest/) | Python >=3.7 - ['1.26', '1.25'];  | `sw_urllib3` |
+| [urllib3](https://urllib3.readthedocs.io/en/latest/) | Python >=3.10 - ['2.8.*'];  | `sw_urllib3` |
 | [urllib_request](https://docs.python.org/3/library/urllib.request.html) | Python >=3.7 - ['*'];  | `sw_urllib_request` |
 | [websockets](https://websockets.readthedocs.io) | Python >=3.10 - ['10.4', '16.0'];  | `sw_websockets` |
 ### Notes
