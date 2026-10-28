@@ -55,7 +55,7 @@ def trace(
         else:
             @wraps(func)
             def wrapper(*args, **kwargs):
-                if not agent.__started:
+                if not agent.is_started():
                     return func(*args, **kwargs)
                                 
                 context = get_context()
