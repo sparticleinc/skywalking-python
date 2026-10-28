@@ -15,12 +15,14 @@
 # specific language governing permissions and limitations
 # under the License.
 
+# Manual fallback only. Release tags are published by CircleCI (.circleci/config.yml); GitHub
+# Actions has not run in this repository since 2026-06. Keeping a tag trigger here as well would
+# upload the same version twice once Actions runs again (PyPI rejects the second upload).
+# Run it from a v* tag ref with "Run workflow" to publish through PyPI trusted publishing.
 name: publish-pypi
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -42,24 +44,7 @@ jobs:
       - name: Verify tag matches package version
         env:
           GIT_TAG: ${{ github.ref_name }}
-        run: |
-          python - <<'PY'
-          import os
-          import pathlib
-          import sys
-          import tomllib
-
-          project = tomllib.loads(pathlib.Path("pyproject.toml").read_text(encoding="utf-8"))
-          package_version = project["tool"]["poetry"]["version"]
-          git_tag = os.environ["GIT_TAG"]
-          expected_version = git_tag[1:] if git_tag.startswith("v") else git_tag
-
-          if package_version != expected_version:
-              print(f"Tag version {expected_version} does not match package version {package_version}.", file=sys.stderr)
-              sys.exit(1)
-
-          print(f"Verified package version {package_version} for tag {git_tag}.")
-          PY
+        run: python tools/check_tag_version.py "$GIT_TAG"
       - name: Generate gRPC protocol code
         # skywalking/protocol is generated and git-ignored; without this step the wheel
         # ships without it and `import skywalking.agent` fails (1.0.6 / 1.0.7).
