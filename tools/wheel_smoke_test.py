@@ -32,6 +32,9 @@ if 'site-packages' not in skywalking.__file__:
 
 # The imports applications do at module level, plus the generated modules the agent loads.
 from skywalking import agent, config  # noqa: E402,F401
+# agent.start() imports this for the default `grpc` reporter; it loads skywalking.client.grpc
+# and the *_pb2_grpc stubs, whose GRPC_GENERATED_VERSION check runs against the grpcio floor.
+import skywalking.agent.protocol.grpc  # noqa: E402,F401
 from skywalking.agent import agent as sw_agent  # noqa: E402
 from skywalking.decorators import trace  # noqa: E402
 from skywalking.protocol.common.Command_pb2 import Commands  # noqa: E402,F401
