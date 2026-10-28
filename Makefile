@@ -48,19 +48,44 @@ else
 	poetry self update || $(MAKE) poetry-fallback
 endif
 
-.PHONY: gen
-gen:
-	poetry run pip install grpcio-tools packaging
-	@if find protocol -name "*.proto" -print -quit | grep -q .; then \
-		poetry run python3 tools/grpc_code_gen.py; \
-	else \
-		echo "Skipping gRPC code generation because no .proto sources are present in ./protocol"; \
+# The generated *_pb2.py files embed the protobuf version of the protoc bundled with
+# grpcio-tools, and protobuf refuses to load gencode newer than its runtime. Keep this
+# pinned to a release whose bundled protoc is not newer than the `protobuf` floor in
+# pyproject.toml (grpcio-tools 1.76.0 emits 6.31.1 gencode for `protobuf>=6.31.1`);
+# tools/grpc_code_gen.py enforces that after generating.
+GRPC_TOOLS_VERSION ?= 1.76.0
+
+# The generated protocol package is not committed (see .gitignore), so a build without the
+# protocol submodule would publish a wheel that cannot `import skywalking.agent`. Fail
+# instead of skipping.
+.PHONY: check-protocol
+check-protocol:
+	@if ! find protocol -name "*.proto" -print -quit | grep -q .; then \
+		echo "No .proto sources under ./protocol; run 'git submodule update --init' first." >&2; \
+		exit 1; \
 	fi
 
+.PHONY: gen
+gen: check-protocol
+	poetry run pip install "grpcio-tools==$(GRPC_TOOLS_VERSION)" packaging
+	poetry run python3 tools/grpc_code_gen.py
+
 .PHONY: gen-basic
-gen-basic:
-	python3 -m pip install grpcio-tools packaging
+gen-basic: check-protocol
+	python3 -m pip install "grpcio-tools==$(GRPC_TOOLS_VERSION)" packaging
 	python3 tools/grpc_code_gen.py
+
+# Install the built wheel into a fresh venv with the lowest supported protobuf and import it
+# from outside the source tree (see tools/wheel_smoke_test.py). Run after `poetry build`.
+PROTOBUF_FLOOR ?= $(shell sed -n 's/^protobuf *= *"[^"]*>= *\([0-9.]*\).*/\1/p' pyproject.toml)
+
+.PHONY: wheel-smoke
+wheel-smoke:
+	@set -e; \
+	smoke_dir=$$(mktemp -d); \
+	python3 -m venv "$$smoke_dir/venv"; \
+	"$$smoke_dir/venv/bin/pip" install --quiet dist/*.whl "protobuf==$(PROTOBUF_FLOOR)"; \
+	cd "$$smoke_dir" && "$$smoke_dir/venv/bin/python" "$(CURDIR)/tools/wheel_smoke_test.py"
 
 .PHONY: install
 install: gen-basic

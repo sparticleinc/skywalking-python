@@ -48,6 +48,31 @@ jobs:
           make lint
 
   # Check if the plugin doc is generated correctly
+  wheel-smoke:
+    # Build the distribution the way publish-pypi.yml does and import it from a clean venv.
+    # Nothing else in CI installs the wheel, which is how 1.0.6 / 1.0.7 shipped without
+    # skywalking/protocol.
+    name: Build Wheel and Smoke Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout source codes
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install build tooling
+        run: python -m pip install --upgrade pip poetry
+      - name: Generate gRPC protocol code
+        run: make gen-basic
+      - name: Build package distributions
+        run: poetry build
+      - name: Smoke test the built wheel
+        run: make wheel-smoke
+
   plugin-doc-check:
     name: Check Plugin Doc
     needs: license-and-lint
@@ -281,17 +306,19 @@ jobs:
     timeout-minutes: 60
     # wait upon them regardless of success or skipped or failure
     if: ${{ always() }}
-    needs: [ license-and-lint, changes, plugin-and-unit-tests, plugin-doc-check, e2e-tests ]
+    needs: [ license-and-lint, wheel-smoke, changes, plugin-and-unit-tests, plugin-doc-check, e2e-tests ]
     steps:
       - name: Merge Requirement
-        # check license, lint, plugin and e2e tests, then naturally exits 0
+        # check license, lint, wheel, plugin and e2e tests, then naturally exits 0
         run: |
           execute=${{ needs.changes.outputs.agent }}
           lintResults=${{ needs.license-and-lint.result }}
+          wheelResults=${{ needs.wheel-smoke.result }};
           pluginResults=${{ needs.plugin-and-unit-tests.result }};
           e2eResults=${{ needs.e2e-tests.result }};
           docCheckResults=${{ needs.plugin-doc-check.result }};
           [[ ${lintResults} == 'success' ]] || exit 2;
+          [[ ${wheelResults} == 'success' ]] || exit 6;
           [[ ${docCheckResults} == 'success' ]] || exit 3;
           [[ ${pluginResults} == 'success' ]] || [[ ${execute} != 'true' && ${pluginResults} == 'skipped' ]] || exit 4;
           [[ ${e2eResults} == 'success' ]] || [[ ${execute} != 'true' && ${e2eResults} == 'skipped' ]] || exit 5;
