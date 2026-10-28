@@ -27,7 +27,7 @@ import google.protobuf
 import skywalking
 
 if 'site-packages' not in skywalking.__file__:
-    sys.exit(f'Imported skywalking from {skywalking.__file__}, not from an installed wheel; '
+    sys.exit(f'Imported skywalking from {skywalking.__file__}, not from an installed wheel - '
              'run this from outside the source tree.')
 
 # The imports applications do at module level, plus the generated modules the agent loads.

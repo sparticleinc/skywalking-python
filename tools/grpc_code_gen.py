@@ -53,7 +53,7 @@ def check_gencode_versions():
     for pb2_file in glob.iglob(os.path.join(dest_dir, '**/*_pb2.py'), recursive=True):
         header = gencode_header.search(Path(pb2_file).read_text(encoding='utf-8'))
         if header is None:
-            sys.exit(f'{pb2_file} has no "Protobuf Python Version" header; cannot verify it')
+            sys.exit(f'{pb2_file} has no "Protobuf Python Version" header, cannot verify it')
         found.add(header.group(1))
 
     too_new = sorted(v for v in found if version.parse(v) > floor)
@@ -66,7 +66,7 @@ def check_gencode_versions():
 def codegen():
     protos = list(glob.iglob(f'{src_dir}/**/*.proto', recursive=True))
     if not protos:
-        sys.exit(f'No .proto sources under ./{src_dir}; run `git submodule update --init` first.')
+        sys.exit(f'No .proto sources under ./{src_dir}: run "git submodule update --init" first.')
 
     # The whole directory is generated (and git-ignored); start clean so stale files from an
     # earlier run with another grpcio-tools version never end up in the package.
