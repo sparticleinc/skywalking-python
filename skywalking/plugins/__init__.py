@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import importlib.util
 import inspect
 import logging
 import pkgutil
@@ -41,7 +42,11 @@ def install():
             logger.info("plugin %s is disabled and thus won't be installed", modname)
             continue
         logger.debug('installing plugin %s', modname)
-        plugin = importer.find_module(modname).load_module(modname)
+        # find_module()/load_module() were removed from import finders in Python 3.12;
+        # load through the spec API, as upstream apache/skywalking-python does.
+        spec = importer.find_spec(modname)
+        plugin = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(plugin)
 
         # todo: refactor the version checker, currently it doesn't really work as intended
         supported = pkg_version_check(plugin)
