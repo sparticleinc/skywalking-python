@@ -2,6 +2,14 @@
 
 ### 1.1.0
 
+### 1.0.9
+
+- Fixes:
+  - **Critical**: on Python 3.12+ `agent.start()` raised `AttributeError: 'FileFinder' object has no attribute 'find_module'` while installing plugins, so an application that enables the agent failed at startup. Plugins are now loaded through `find_spec` / `module_from_spec`, as upstream does.
+
+- Others:
+  - `make wheel-smoke` now starts the agent from the installed wheel, and `tests/unit/test_plugins_install.py` checks that every plugin module loads.
+
 ### 1.0.8
 
 - Fixes:

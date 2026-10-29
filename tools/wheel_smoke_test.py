@@ -56,4 +56,13 @@ assert not sw_agent.is_started()
 assert sync_traced(21) == 42
 assert asyncio.run(async_traced(41)) == 42
 
+# What an application does to enable the agent. start() installs every plugin: 1.0.8 loaded
+# them with find_module(), which Python 3.12 removed, so start() raised AttributeError there.
+# The collector address is unreachable on purpose; only starting is checked (reporter threads
+# log connection errors, and stop() reports a final segment that cannot be delivered).
+config.init(agent_collector_backend_services='127.0.0.1:1', agent_name='wheel-smoke', agent_protocol='grpc',
+            agent_meter_reporter_active=False, agent_log_reporter_active=False)
+sw_agent.start()
+assert sw_agent.is_started()
+
 print(f'wheel smoke test OK: python {sys.version.split()[0]}, protobuf {google.protobuf.__version__}')
