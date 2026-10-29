@@ -60,8 +60,14 @@ jobs:
 
           print(f"Verified package version {package_version} for tag {git_tag}.")
           PY
+      - name: Generate gRPC protocol code
+        # skywalking/protocol is generated and git-ignored; without this step the wheel
+        # ships without it and `import skywalking.agent` fails (1.0.6 / 1.0.7).
+        run: make gen-basic
       - name: Build package distributions
         run: poetry build
+      - name: Smoke test the built wheel
+        run: make wheel-smoke
       - name: Check distributions
         run: python -m twine check dist/*
       - name: Upload distributions

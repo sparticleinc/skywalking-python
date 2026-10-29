@@ -2,6 +2,16 @@
 
 ### 1.1.0
 
+### 1.0.8
+
+- Fixes:
+  - **Critical**: 1.0.6 and 1.0.7 were published without the generated `skywalking.protocol` package, so `import skywalking.agent` / `skywalking.decorators` failed with `ModuleNotFoundError`. Restore `protocol` as a git submodule (pinned to the commit upstream 1.0.1 uses) and generate the code before building.
+  - **Critical**: a sync function decorated with `@trace` raised `AttributeError: 'SkyWalkingAgent' object has no attribute '__started'` on every call; use `agent.is_started()` as the async path already does.
+
+- Others:
+  - `make gen` / `make gen-basic` fail when `./protocol` has no `.proto` sources instead of skipping, and pin grpcio-tools (`GRPC_TOOLS_VERSION`, 1.76.0) so the generated code never targets a newer protobuf or grpcio than the `protobuf` / `grpcio` floors; `tools/grpc_code_gen.py` checks both after generating.
+  - Build the wheel and smoke-test it from a clean venv at the `protobuf` / `grpcio` floors (`make wheel-smoke`, including the gRPC stubs the default reporter loads) in a new `Wheel` workflow on every PR and push to `main`, and before publishing to PyPI. The workflow has no schedule trigger, so GitHub's inactivity auto-disable (which turned `CI.yaml` off) cannot switch it off.
+
 ### 1.0.6
 
 - Others:

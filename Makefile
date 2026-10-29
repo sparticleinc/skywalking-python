@@ -48,19 +48,46 @@ else
 	poetry self update || $(MAKE) poetry-fallback
 endif
 
-.PHONY: gen
-gen:
-	poetry run pip install grpcio-tools packaging
-	@if find protocol -name "*.proto" -print -quit | grep -q .; then \
-		poetry run python3 tools/grpc_code_gen.py; \
-	else \
-		echo "Skipping gRPC code generation because no .proto sources are present in ./protocol"; \
+# Generated code refuses to load on a runtime older than the one it was generated for:
+# *_pb2.py embed the protobuf version of the protoc bundled with grpcio-tools, and the
+# *_pb2_grpc.py stubs embed the grpcio-tools version as GRPC_GENERATED_VERSION. Keep this
+# pinned to a release that targets neither a newer protobuf nor a newer grpcio than the
+# floors in pyproject.toml (grpcio-tools 1.76.0 emits 6.31.1 gencode and 1.76.0 stubs for
+# `protobuf>=6.31.1` / `grpcio>=1.76.0`); tools/grpc_code_gen.py enforces both after generating.
+GRPC_TOOLS_VERSION ?= 1.76.0
+
+# The generated protocol package is not committed (see .gitignore), so a build without the
+# protocol submodule would publish a wheel that cannot `import skywalking.agent`. Fail
+# instead of skipping.
+.PHONY: check-protocol
+check-protocol:
+	@if ! find protocol -name "*.proto" -print -quit | grep -q .; then \
+		echo "No .proto sources under ./protocol; run 'git submodule update --init' first." >&2; \
+		exit 1; \
 	fi
 
+.PHONY: gen
+gen: check-protocol
+	poetry run pip install "grpcio-tools==$(GRPC_TOOLS_VERSION)" packaging
+	poetry run python3 tools/grpc_code_gen.py
+
 .PHONY: gen-basic
-gen-basic:
-	python3 -m pip install grpcio-tools packaging
+gen-basic: check-protocol
+	python3 -m pip install "grpcio-tools==$(GRPC_TOOLS_VERSION)" packaging
 	python3 tools/grpc_code_gen.py
+
+# Install the built wheel into a fresh venv with the lowest supported protobuf and grpcio and
+# import it from outside the source tree (see tools/wheel_smoke_test.py). Run after `poetry build`.
+PROTOBUF_FLOOR ?= $(shell sed -n 's/^protobuf *= *"[^"]*>= *\([0-9.]*\).*/\1/p' pyproject.toml)
+GRPCIO_FLOOR ?= $(shell sed -n 's/^grpcio *= *"[^"]*>= *\([0-9.]*\).*/\1/p' pyproject.toml)
+
+.PHONY: wheel-smoke
+wheel-smoke:
+	@set -e; \
+	smoke_dir=$$(mktemp -d); \
+	python3 -m venv "$$smoke_dir/venv"; \
+	"$$smoke_dir/venv/bin/pip" install --quiet dist/*.whl "protobuf==$(PROTOBUF_FLOOR)" "grpcio==$(GRPCIO_FLOOR)"; \
+	cd "$$smoke_dir" && "$$smoke_dir/venv/bin/python" "$(CURDIR)/tools/wheel_smoke_test.py"
 
 .PHONY: install
 install: gen-basic
