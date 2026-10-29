@@ -11,7 +11,6 @@
 - Others:
   - `make gen` / `make gen-basic` fail when `./protocol` has no `.proto` sources instead of skipping, and pin grpcio-tools (`GRPC_TOOLS_VERSION`, 1.76.0) so the generated code never targets a newer protobuf or grpcio than the `protobuf` / `grpcio` floors; `tools/grpc_code_gen.py` checks both after generating.
   - Build the wheel and smoke-test it from a clean venv at the `protobuf` / `grpcio` floors (`make wheel-smoke`, including the gRPC stubs the default reporter loads) in a new `Wheel` workflow on every PR and push to `main`, and before publishing to PyPI. The workflow has no schedule trigger, so GitHub's inactivity auto-disable (which turned `CI.yaml` off) cannot switch it off.
-  - Release tags (`v*`) are built and published to PyPI by CircleCI (`.circleci/config.yml`, the CI the other sparticleinc repositories use), which also checks the wheel on every branch. The GitHub Actions `publish-pypi` workflow is now a manual fallback (`workflow_dispatch`), so a tag is never uploaded twice.
 
 ### 1.0.6
 
